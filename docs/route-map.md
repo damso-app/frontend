@@ -18,6 +18,7 @@
 | 9 | 네컷 그리드 (날짜+가족 단위) | `/diary` | `GET /api/v1/clips` | **구현됨** (`src/app/diary`). API 클라이언트는 `src/lib/api/clips.ts` |
 | 10 | 컷 상세 (영상/명대사/요약) | `/diary/[answerId]` | `GET /api/v1/answers/{answer_id}/clip` | 미구현 |
 | – | 설정 | `/settings` | 문서 확인 필요 | 미구현 |
+| – | 카메라/마이크 권한 복구 안내 (F-15) | `/questions/[questionSendId]/record/permission` | – (`navigator.mediaDevices.getUserMedia`로 재요청) | **구현됨** (`src/app/questions/[questionSendId]/record/permission`). F-07에서 카메라 접근 실패 시 자동 이동, 성공하면 F-07로 복귀 |
 
 ## BottomNav ↔ 라우트 매핑
 
@@ -38,3 +39,5 @@
 - Supabase Realtime 채널 접속 정보(URL/키) — 나오기 전까지 `/answers/[answerId]/processing`은 `GET .../clip`을 2초 간격으로 폴링해서 완료를 감지함
 - `GET /api/v1/answers/{answer_id}/clip`이 미완료 상태일 때 정확히 어떤 응답(404 등)을 주는지 미확인 — 현재는 "실패하면 아직 처리 중"으로 취급
 - `GET /api/v1/clips` 응답에 `title`/`familyMemberRole`/`familyMemberName`/`questionCount` 필드가 실제로 포함되는지 미확인 (`src/lib/api/clips.ts`의 `DiaryEntry`에 옵셔널로 추정 반영). 그룹 헤더(월)와 "오늘/어제/N일 전" 상대 날짜 표기도 백엔드가 별도 그룹 구조를 주는지, 프론트가 `submittedAt` 하나로 직접 계산해야 하는지 확인 필요 — 현재는 후자로 구현
+- F-15의 "← 뒤로가기"는 F-06(받은 질문 · 답변 준비)이 아직 없어 임시로 `router.back()`만 호출함. F-06 라우트가 생기면 `questionSendId` 기준으로 그쪽으로 보내야 함
+- F-15의 "권한 허용 방법" 버튼은 목적지/콘텐츠 미정으로 아직 no-op 상태

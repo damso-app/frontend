@@ -216,7 +216,10 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
             className="h-full w-full object-cover"
             videoConstraints={{ facingMode: "user" }}
             onUserMedia={() => setCameraReady(true)}
-            onUserMediaError={() => setCameraError("camera-denied")}
+            onUserMediaError={() => {
+              setCameraError("camera-denied");
+              router.push(`/questions/${questionSendId}/record/permission`);
+            }}
           />
         )}
 
