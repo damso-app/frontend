@@ -14,7 +14,7 @@
 | 5 | 질문 상세 / 읽음 처리 | `/questions/[questionSendId]` | `GET /api/v1/answers/questions/{id}`, `PATCH .../read` | 미구현 |
 | 6 | 자녀가 질문 보내기 | `/questions/new` (가칭) | **Question 발송 API 미확인** — 이 문서(Answer API)에는 수신자 측 API만 있음 | 미구현 |
 | 7 | 영상 답변 기록 | `/questions/[questionSendId]/record` | `POST /api/v1/answers/upload-url` → GCS PUT → `POST /api/v1/answers` | **구현됨** (`src/app/questions/[questionSendId]/record`). API 클라이언트는 `src/lib/api/answers.ts` |
-| 8 | AI 처리 상태 (submitted→processing→completed/failed) | 별도 화면 없음. 네컷 그리드/상세에서 `status`로 표현 | Supabase Realtime `family:{family_id}` 채널의 `answer_status_updated` 이벤트 | 미구현 |
+| 8 | AI 처리 상태 (submitted→processing→completed/failed) | `/answers/[answerId]/processing` | `GET /api/v1/answers/{answer_id}/clip` (임시 폴링), 추후 Supabase Realtime `family:{family_id}` 채널 `answer_status_updated`로 교체 예정 | **구현됨** (`src/app/answers/[answerId]/processing`). F-07 제출 성공 시 이 라우트로 이동 |
 | 9 | 네컷 그리드 (날짜+가족 단위) | `/diary` | `GET /api/v1/clips` | 미구현 |
 | 10 | 컷 상세 (영상/명대사/요약) | `/diary/[answerId]` | `GET /api/v1/answers/{answer_id}/clip` | 미구현 |
 | – | 설정 | `/settings` | 문서 확인 필요 | 미구현 |
@@ -33,5 +33,7 @@
 ## 확인 필요 항목
 
 - 카카오 로그인, 역할 선택, 가족 생성/합류 API 스펙 (아직 공유된 문서 없음)
-- 질문을 자녀가 부모에게 "보내는" 쪽 API (Answer API 문서는 수신자 측만 다룸)
+- 질문을 자녀가 부모에게 "보내는" 쪽 API (Answer API 문서는 수신자 측만 다룸) — F-08의 "상대방에게 질문하기" 버튼도 같은 이유로 `/questions/new`(미구현) 스텁 이동만 함
 - 로그인 토큰 발급/저장 방식 (`src/lib/api/client.ts`의 `getAccessToken`은 `localStorage` 하드코딩 임시 구현)
+- Supabase Realtime 채널 접속 정보(URL/키) — 나오기 전까지 `/answers/[answerId]/processing`은 `GET .../clip`을 2초 간격으로 폴링해서 완료를 감지함
+- `GET /api/v1/answers/{answer_id}/clip`이 미완료 상태일 때 정확히 어떤 응답(404 등)을 주는지 미확인 — 현재는 "실패하면 아직 처리 중"으로 취급

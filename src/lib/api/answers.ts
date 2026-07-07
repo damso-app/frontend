@@ -54,3 +54,23 @@ export function submitAnswer(input: SubmitAnswerInput) {
     body: JSON.stringify(input),
   });
 }
+
+export interface AnswerClip {
+  videoUrl: string;
+  thumbnailUrl: string;
+  transcript: string;
+  transcriptSegments: unknown[];
+  title: string;
+  quote: string;
+  oneLineSummary: string;
+  emotionTags: string[];
+  fourcutTitle: string;
+}
+
+/**
+ * GET /api/v1/answers/{answer_id}/clip — status가 completed일 때만 데이터 존재.
+ * 미완료 상태일 때의 정확한 응답 형태(404 등)는 아직 미확인 — docs/route-map.md 참고.
+ */
+export function getAnswerClip(answerId: string) {
+  return apiFetch<AnswerClip>(`/v1/answers/${answerId}/clip`);
+}

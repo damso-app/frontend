@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Webcam from "react-webcam";
 import { BottomNav, Button, Card } from "@/components/ui";
 import { requestAnswerUploadUrl, submitAnswer, uploadAnswerVideo } from "@/lib/api/answers";
@@ -30,6 +31,7 @@ function pickMimeType() {
 
 export default function RecordAnswerPage({ params }: { params: Promise<{ questionSendId: string }> }) {
   const { questionSendId } = use(params);
+  const router = useRouter();
 
   const webcamRef = useRef<Webcam>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -112,7 +114,7 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
       await uploadAnswerVideo(uploadUrl, recordedBlob);
 
       setSubmitState("submitting");
-      await submitAnswer({
+      const result = await submitAnswer({
         questionSendId,
         videoMimeType,
         videoDurationSeconds: elapsedSec,
@@ -120,12 +122,13 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
       });
 
       setSubmitState("submitted");
+      router.push(`/answers/${result.answerId}/processing`);
     } catch (err) {
       console.error("answer submit failed", err);
       setSubmitState("error");
       setSubmitError("답변 전달에 실패했어요. 잠시 후 다시 시도해주세요.");
     }
-  }, [recordedBlob, questionSendId, elapsedSec]);
+  }, [recordedBlob, questionSendId, elapsedSec, router]);
 
   const isSubmitting = submitState === "uploading" || submitState === "submitting";
 
