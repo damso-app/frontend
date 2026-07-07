@@ -20,3 +20,5 @@ export type { TextareaProps } from "./forms/Textarea";
 
 export { Tabs } from "./navigation/Tabs";
 export type { TabsProps, TabItem, TabsVariant } from "./navigation/Tabs";
+export { BottomNav } from "./navigation/BottomNav";
+export type { BottomNavProps, BottomNavItem } from "./navigation/BottomNav";

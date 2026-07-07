@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "soft" | "danger";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "soft" | "danger" | "sage";
 export type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps
@@ -75,6 +75,12 @@ const variants: Record<ButtonVariant, VariantStateSpec> = {
     base: { background: "var(--color-error)", color: "#fff", border: "none" },
     hover: { background: "#B84030" },
     pressed: { background: "#9A3428" },
+    disabled: { background: "var(--color-cream-400)", color: "var(--color-ink-200)" },
+  },
+  sage: {
+    base: { background: "var(--color-sage-400)", color: "#fff", border: "none" },
+    hover: { background: "var(--color-sage-500)" },
+    pressed: { background: "var(--color-sage-600)" },
     disabled: { background: "var(--color-cream-400)", color: "var(--color-ink-200)" },
   },
 };
