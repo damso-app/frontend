@@ -9,7 +9,7 @@
 
 | 컴포넌트                   | 경로                  | 주요 props                                                                                                                          | 비고                                               |
 | -------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `Button`                   | `actions/Button.tsx`  | `variant`: primary·secondary·ghost·soft·danger / `size`: sm·md·lg / `loading` / `leftIcon` / `rightIcon` / `fullWidth` / `disabled` | 항상 pill 모양, `md` 44px·`lg` 52px 최소 터치 높이 |
+| `Button`                   | `actions/Button.tsx`  | `variant`: primary·secondary·ghost·soft·danger·sage / `size`: sm·md·lg / `loading` / `leftIcon` / `rightIcon` / `fullWidth` / `disabled` | 항상 pill 모양, `md` 44px·`lg` 52px 최소 터치 높이 |
 | `Avatar`                   | `display/Avatar.tsx`  | `src` / `name` / `size`: xs·sm·md·lg·xl·2xl / `online`                                                                              | 이미지 없으면 이니셜, 이름 해시로 배경색 결정      |
 | `Badge`                    | `display/Badge.tsx`   | `variant`: default·primary·sage·amber·success·error·warning·outline·dark / `size`: sm·md·lg / `dot`                                 | 항상 pill 모양, 상태·감정 태그용                   |
 | `Card`                     | `display/Card.tsx`    | `variant`: base·feature·quote·video·diary·sage·amber / `elevation`: flat·subtle·card·modal / `padding` / `bg` / `onClick`           | `onClick` 지정 시 hover에서 위로 살짝 떠오름       |
@@ -18,6 +18,7 @@
 | `Input`                    | `forms/Input.tsx`     | `label` / `error` / `hint` / `leftElement` / `rightElement` / `disabled`                                                            | 최소 높이 44px, 포커스 시 코랄 링                  |
 | `Textarea`                 | `forms/Textarea.tsx`  | `label` / `error` / `hint` / `rows` / `maxLength`                                                                                   | `maxLength` 지정 시 글자 수 카운터 표시            |
 | `Tabs`                     | `navigation/Tabs.tsx` | `tabs`: `{id,label,icon?,disabled?}[]` / `activeTab` / `onChange` / `variant`: line·pill / `fullWidth`                              | line = 메인 내비게이션 밑줄, pill = 인페이지 토글  |
+| `BottomNav`                | `navigation/BottomNav.tsx` | `items`: `{id,label,icon?}[]` / `activeId` / `onChange`                                                                        | 화면 하단 고정 4탭 내비게이션, 활성 탭은 필 하이라이트 |
 
 ## 토큰
 
