@@ -4,8 +4,10 @@
 
 | # | 플로우 단계 | 라우트 | 연동 API | 상태 |
 | --- | --- | --- | --- | --- |
-| 1 | 온보딩 | `/onboarding` | – | 미구현 |
-| 2 | 카카오 로그인 진입 | `/login` | 카카오 OAuth + 백엔드 콜백 (문서 확인 필요) | 미구현 |
+| 1 | 온보딩 | `/onboarding` | – | **구현됨** (`src/app/onboarding`). 브랜드 첫 화면, CTA 클릭 시 `/login` 이동 |
+| 2 | 카카오 로그인 진입 | `/login` | `GET /api/v1/auth/kakao/login-url` | **구현됨** (`src/app/login`). 백엔드에서 받은 `loginUrl`로 이동 |
+| 2 | 카카오 로그인 콜백 | `/auth/kakao/callback` | `POST /api/v1/auth/login-code/exchange` | **구현됨** (`src/app/auth/kakao/callback`). query의 `loginCode`를 Damso access token으로 교환 후 `localStorage(damso_access_token)` 저장, 이후 `/agreements` 이동 |
+| 2 | 필수 동의 | `/agreements` | 동의 저장 API 문서 확인 필요 (현재 stub) | **구현됨** (`src/app/agreements`). 모든 필수 동의 체크 시 임시로 `/onboarding/role` 이동 |
 | 3 | 역할 선택 (자식/엄마/아빠) | `/onboarding/role` | 문서 확인 필요 | 미구현 |
 | 4 | 가족 생성 · 초대 코드 공유 | `/family/create` | 문서 확인 필요 | 미구현 |
 | 4 | 초대 코드로 가족 합류 | `/family/join` | 문서 확인 필요 | 미구현 |
@@ -33,9 +35,10 @@
 
 ## 확인 필요 항목
 
-- 카카오 로그인, 역할 선택, 가족 생성/합류 API 스펙 (아직 공유된 문서 없음)
+- 필수 동의 저장, 역할 선택, 가족 생성/합류 API 스펙 (아직 공유된 문서 없음)
+- 카카오 로그인 코드 교환 응답의 최종 토큰 필드명 — 현재 프론트는 `accessToken`, `access_token`, `token`, `data.accessToken`, `data.access_token`을 허용하고 토큰이 없으면 실패 처리
 - 질문을 자녀가 부모에게 "보내는" 쪽 API (Answer API 문서는 수신자 측만 다룸) — F-08의 "상대방에게 질문하기" 버튼도 같은 이유로 `/questions/new`(미구현) 스텁 이동만 함
-- 로그인 토큰 발급/저장 방식 (`src/lib/api/client.ts`의 `getAccessToken`은 `localStorage` 하드코딩 임시 구현)
+- 로그인 토큰 저장 방식은 MVP 기준 `localStorage`의 `damso_access_token` 키를 사용 (`src/lib/auth/token.ts`). 추후 보안 정책 확정 시 httpOnly cookie 등으로 재검토 필요
 - Supabase Realtime 채널 접속 정보(URL/키) — 나오기 전까지 `/answers/[answerId]/processing`은 `GET .../clip`을 2초 간격으로 폴링해서 완료를 감지함
 - `GET /api/v1/answers/{answer_id}/clip`이 미완료 상태일 때 정확히 어떤 응답(404 등)을 주는지 미확인 — 현재는 "실패하면 아직 처리 중"으로 취급
 - `GET /api/v1/clips` 응답에 `title`/`familyMemberRole`/`familyMemberName`/`questionCount` 필드가 실제로 포함되는지 미확인 (`src/lib/api/clips.ts`의 `DiaryEntry`에 옵셔널로 추정 반영). 그룹 헤더(월)와 "오늘/어제/N일 전" 상대 날짜 표기도 백엔드가 별도 그룹 구조를 주는지, 프론트가 `submittedAt` 하나로 직접 계산해야 하는지 확인 필요 — 현재는 후자로 구현

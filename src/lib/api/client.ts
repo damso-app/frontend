@@ -1,10 +1,6 @@
-const API_BASE = "/api";
+import { getAccessToken } from "@/lib/auth/token";
 
-// TODO: 실제 로그인 플로우가 생기면 토큰 저장/조회 방식을 auth 모듈로 옮긴다 (docs/route-map.md 확인 필요 항목).
-function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("damso_access_token");
-}
+const API_BASE = "/api";
 
 export class ApiError extends Error {
   status: number;
