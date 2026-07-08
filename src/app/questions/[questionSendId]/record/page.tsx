@@ -109,9 +109,11 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
     setSubmitState("uploading");
 
     try {
-      const videoMimeType = recordedBlob.type || "video/webm";
+      // MediaRecorder가 주는 타입엔 코덱 정보가 붙어있는데(예: "video/webm;codecs=vp9,opus"),
+      // 백엔드는 정확히 일치하는 몇 종류(video/mp4, video/webm 등)만 허용해 415를 반환한다.
+      const videoMimeType = (recordedBlob.type || "video/webm").split(";")[0].trim();
       const { uploadUrl } = await requestAnswerUploadUrl({ questionSendId, videoMimeType });
-      await uploadAnswerVideo(uploadUrl, recordedBlob);
+      await uploadAnswerVideo(uploadUrl, recordedBlob, videoMimeType);
 
       setSubmitState("submitting");
       const result = await submitAnswer({

@@ -20,11 +20,15 @@ export function requestAnswerUploadUrl(input: RequestAnswerUploadUrlInput) {
   });
 }
 
-/** 발급받은 presigned URL로 영상을 GCS에 직접 업로드 (백엔드 경유 안 함) */
-export async function uploadAnswerVideo(uploadUrl: string, video: Blob) {
+/**
+ * 발급받은 presigned URL로 영상을 GCS에 직접 업로드 (백엔드 경유 안 함).
+ * GCS v4 서명 URL은 Content-Type을 서명에 포함하므로, upload-url 발급 때 보낸
+ * videoMimeType과 정확히 같은 값을 여기서도 보내야 한다 (다르면 서명 불일치로 실패).
+ */
+export async function uploadAnswerVideo(uploadUrl: string, video: Blob, contentType: string) {
   const res = await fetch(uploadUrl, {
     method: "PUT",
-    headers: { "Content-Type": video.type },
+    headers: { "Content-Type": contentType },
     body: video,
   });
 
@@ -41,8 +45,8 @@ export interface SubmitAnswerInput {
 }
 
 export interface SubmitAnswerResult {
-  answerId: string;
-  questionSendId: string;
+  answerId: number;
+  questionSendId: number;
   status: AnswerStatus;
   submittedAt: string;
 }
@@ -56,20 +60,20 @@ export function submitAnswer(input: SubmitAnswerInput) {
 }
 
 export interface AnswerClip {
-  videoUrl: string;
-  thumbnailUrl: string;
-  transcript: string;
-  transcriptSegments: unknown[];
-  title: string;
-  quote: string;
-  oneLineSummary: string;
-  emotionTags: string[];
-  fourcutTitle: string;
+  answerId: number;
+  videoUrl: string | null;
+  thumbnailUrl: string | null;
+  transcript: string | null;
+  transcriptSegments: unknown[] | null;
+  title: string | null;
+  quote: string | null;
+  oneLineSummary: string | null;
+  emotionTags: string[] | null;
+  fourcutTitle: string | null;
 }
 
 /**
- * GET /api/v1/answers/{answer_id}/clip — status가 completed일 때만 데이터 존재.
- * 미완료 상태일 때의 정확한 응답 형태(404 등)는 아직 미확인 — docs/route-map.md 참고.
+ * GET /api/v1/answers/{answer_id}/clip — AI 처리가 끝나지 않았으면 404("Clip was not found")를 반환한다.
  */
 export function getAnswerClip(answerId: string) {
   return apiFetch<AnswerClip>(`/v1/answers/${answerId}/clip`);

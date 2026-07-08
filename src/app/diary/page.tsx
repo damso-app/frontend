@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, BottomNav, Card } from "@/components/ui";
-import { getDiaryEntries } from "@/lib/api/clips";
-import type { DiaryEntry, FamilyRole } from "@/lib/api/clips";
+import { getClipGrid } from "@/lib/api/clips";
+import type { ClipGridGroup } from "@/lib/api/clips";
 
 const NAV_ITEMS = [
   { id: "home", label: "홈" },
@@ -13,29 +13,8 @@ const NAV_ITEMS = [
   { id: "settings", label: "설정" },
 ];
 
-const FILTERS = [
-  { id: "all", label: "전체" },
-  { id: "mom", label: "엄마" },
-  { id: "dad", label: "아빠" },
-  { id: "child", label: "자녀" },
-] as const;
-
-type FilterId = (typeof FILTERS)[number]["id"];
-
-const ROLE_LABEL: Record<FamilyRole, string> = {
-  mom: "엄마",
-  dad: "아빠",
-  child: "자녀",
-};
-
-const ROLE_ACCENT: Record<FamilyRole, string> = {
-  mom: "var(--color-coral-400)",
-  dad: "var(--color-amber-300)",
-  child: "var(--color-sage-400)",
-};
-
-function formatRelativeDay(iso: string) {
-  const date = new Date(iso);
+function formatRelativeDay(dateStr: string) {
+  const date = new Date(`${dateStr}T00:00:00`);
   const now = new Date();
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const diffDays = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
@@ -47,22 +26,21 @@ function formatRelativeDay(iso: string) {
   return `${date.getMonth() + 1}.${date.getDate()}`;
 }
 
-function formatMonthLabel(iso: string) {
-  const date = new Date(iso);
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}`;
+function formatMonthLabel(dateStr: string) {
+  const [year, month] = dateStr.split("-");
+  return `${year}.${month}`;
 }
 
 export default function DiaryPage() {
   const router = useRouter();
-  const [entries, setEntries] = useState<DiaryEntry[] | null>(null);
+  const [groups, setGroups] = useState<ClipGridGroup[] | null>(null);
   const [error, setError] = useState(false);
-  const [filter, setFilter] = useState<FilterId>("all");
 
   useEffect(() => {
     let cancelled = false;
-    getDiaryEntries()
+    getClipGrid()
       .then((data) => {
-        if (!cancelled) setEntries(data);
+        if (!cancelled) setGroups(data);
       })
       .catch(() => {
         if (!cancelled) setError(true);
@@ -72,21 +50,16 @@ export default function DiaryPage() {
     };
   }, []);
 
-  const filtered = useMemo(() => {
-    if (!entries) return [];
-    if (filter === "all") return entries;
-    return entries.filter((entry) => entry.familyMemberRole === filter);
-  }, [entries, filter]);
-
-  const groups = useMemo(() => {
-    const map = new Map<string, DiaryEntry[]>();
-    for (const entry of filtered) {
-      const key = formatMonthLabel(entry.submittedAt);
+  const monthSections = useMemo(() => {
+    if (!groups) return [];
+    const map = new Map<string, ClipGridGroup[]>();
+    for (const group of groups) {
+      const key = formatMonthLabel(group.date);
       if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(entry);
+      map.get(key)!.push(group);
     }
     return Array.from(map.entries());
-  }, [filtered]);
+  }, [groups]);
 
   return (
     <div
@@ -123,54 +96,25 @@ export default function DiaryPage() {
         </p>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto">
-        {FILTERS.map((f) => {
-          const active = f.id === filter;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              style={{
-                flexShrink: 0,
-                height: "30px",
-                padding: "0 16px",
-                borderRadius: "var(--radius-full)",
-                border: "1px solid var(--hairline-soft)",
-                background: active ? "var(--color-cream-200)" : "var(--canvas)",
-                color: active ? "var(--text-2)" : "var(--text-3)",
-                fontFamily: "var(--font-sans)",
-                fontSize: "13px",
-                fontWeight: active ? "var(--weight-medium)" : "var(--weight-regular)",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {f.label}
-            </button>
-          );
-        })}
-      </div>
-
       {error && (
         <p className="text-body-sm text-center" style={{ color: "var(--color-error)" }}>
           다이어리를 불러오지 못했어요.
         </p>
       )}
 
-      {!error && entries === null && (
+      {!error && groups === null && (
         <p className="text-body-sm text-center" style={{ color: "var(--text-3)" }}>
           불러오는 중...
         </p>
       )}
 
-      {entries !== null && !error && groups.length === 0 && (
+      {groups !== null && !error && monthSections.length === 0 && (
         <p className="text-body-sm text-center" style={{ color: "var(--text-3)" }}>
           아직 저장된 회고록이 없어요.
         </p>
       )}
 
-      {groups.map(([monthLabel, monthEntries]) => (
+      {monthSections.map(([monthLabel, monthGroups]) => (
         <div key={monthLabel} className="flex flex-col gap-3">
           <p
             style={{
@@ -183,51 +127,52 @@ export default function DiaryPage() {
             {monthLabel}
           </p>
 
-          {monthEntries.map((entry) => (
-            <Card
-              key={entry.answerId}
-              variant="base"
-              elevation="card"
-              padding="var(--space-md)"
-              onClick={() => router.push(`/diary/${entry.answerId}`)}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2">
-                  <span
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      marginTop: "8px",
-                      borderRadius: "50%",
-                      background: entry.familyMemberRole ? ROLE_ACCENT[entry.familyMemberRole] : "var(--color-coral-400)",
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div>
-                    <p
+          {monthGroups.map((group) => {
+            const allCompleted = group.clips.every((clip) => clip.status === "completed");
+            return (
+              <Card
+                key={group.date}
+                variant="base"
+                elevation="card"
+                padding="var(--space-md)"
+                onClick={() => router.push(`/diary/${group.date}`)}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2">
+                    <span
                       style={{
-                        fontFamily: "var(--font-sans)",
-                        fontSize: "18px",
-                        fontWeight: "var(--weight-medium)",
-                        color: "var(--text-1)",
+                        width: "8px",
+                        height: "8px",
+                        marginTop: "8px",
+                        borderRadius: "50%",
+                        background: "var(--color-coral-400)",
+                        flexShrink: 0,
                       }}
-                    >
-                      {entry.title ?? "가족 회고록"}
-                    </p>
-                    <p className="text-caption" style={{ marginTop: "4px" }}>
-                      {formatRelativeDay(entry.submittedAt)}
-                      {entry.familyMemberRole && ` · ${ROLE_LABEL[entry.familyMemberRole]} 답변`}
-                      {entry.questionCount != null && ` · 질문 ${entry.questionCount}개`}
-                    </p>
+                    />
+                    <div>
+                      <p
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: "18px",
+                          fontWeight: "var(--weight-medium)",
+                          color: "var(--text-1)",
+                        }}
+                      >
+                        가족 회고록
+                      </p>
+                      <p className="text-caption" style={{ marginTop: "4px" }}>
+                        {formatRelativeDay(group.date)} · 답변 {group.clips.length}개
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <Badge variant={entry.status === "completed" ? "success" : "default"} size="md">
-                  {entry.status === "completed" ? "완료" : "답변 대기"}
-                </Badge>
-              </div>
-            </Card>
-          ))}
+                  <Badge variant={allCompleted ? "success" : "default"} size="md">
+                    {allCompleted ? "완료" : "처리 중"}
+                  </Badge>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       ))}
 

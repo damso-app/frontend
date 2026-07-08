@@ -36,9 +36,7 @@ export default function RecordPermissionPage({ params }: { params: Promise<{ que
     >
       <button
         type="button"
-        // TODO: F-06(받은 질문 · 답변 준비) 라우트가 생기면 questionSendId 기준으로 그 화면으로 보낸다.
-        // 아직 없어서 우선 브라우저 back으로 대체.
-        onClick={() => router.back()}
+        onClick={() => router.push(`/questions/${questionSendId}`)}
         className="flex items-center gap-1 self-start"
         style={{
           background: "none",
