@@ -7,10 +7,10 @@
 | 1 | 온보딩 | `/onboarding` | – | **구현됨** (`src/app/onboarding`). 브랜드 첫 화면, CTA 클릭 시 `/login` 이동 |
 | 2 | 카카오 로그인 진입 | `/login` | `GET /api/v1/auth/kakao/login-url` | **구현됨** (`src/app/login`). 백엔드에서 받은 `loginUrl`로 이동 |
 | 2 | 카카오 로그인 콜백 | `/auth/kakao/callback` | `POST /api/v1/auth/login-code/exchange` | **구현됨** (`src/app/auth/kakao/callback`). query의 `loginCode`를 Damso access token으로 교환 후 `localStorage(damso_access_token)` 저장, 이후 `/agreements` 이동 |
-| 2 | 필수 동의 | `/agreements` | 동의 저장 API 문서 확인 필요 (현재 stub) | **구현됨** (`src/app/agreements`). 모든 필수 동의 체크 시 임시로 `/onboarding/role` 이동 |
-| 3 | 역할 선택 (자식/엄마/아빠) | `/onboarding/role` | 문서 확인 필요 | 미구현 |
-| 4 | 가족 생성 · 초대 코드 공유 | `/family/create` | 문서 확인 필요 | 미구현 |
-| 4 | 초대 코드로 가족 합류 | `/family/join` | 문서 확인 필요 | 미구현 |
+| 2 | 필수 동의 | `/agreements` | `GET /api/v1/users/me/agreements`, `POST /api/v1/users/me/agreements` | **구현됨** (`src/app/agreements`). 모든 필수 동의 체크 시 `/onboarding/role` 이동 |
+| 3 | 역할 선택 (자식/엄마/아빠) | `/onboarding/role` | `PATCH /api/v1/users/me/role`, `GET /api/v1/users/me/onboarding` | **구현됨** (`src/app/onboarding/role`). 역할 저장 후 가족 연결 상태에 따라 `/family/create` 또는 `/` 이동 |
+| 4 | 가족 생성 · 초대 코드 공유 | `/family/create` | `POST /api/v1/families`, `GET /api/v1/families/me/invitation` | **구현됨** (`src/app/family/create`). 기존 초대 코드 조회 후 없으면 가족 생성, 복사/공유 fallback 제공 |
+| 4 | 초대 코드로 가족 합류 | `/family/join` | `GET /api/v1/families/invitations/{invite_code}`, `POST /api/v1/families/join` | **구현됨** (`src/app/family/join`). 코드 검증 후 `inviteCode`로 합류 요청 |
 | 5 | 홈 | `/` | 문서 확인 필요 | 미구현 (현재 CNA 기본 템플릿) |
 | 5 | 질문 목록 확인 | `/questions` | `GET /api/v1/answers/questions` | 미구현 |
 | 5 | 질문 상세 / 읽음 처리 | `/questions/[questionSendId]` | `GET /api/v1/answers/questions/{id}`, `PATCH .../read` | 미구현 |
@@ -35,7 +35,8 @@
 
 ## 확인 필요 항목
 
-- 필수 동의 저장, 역할 선택, 가족 생성/합류 API 스펙 (아직 공유된 문서 없음)
+- 가족 생성/합류 화면의 최종 UX와 Figma 노드
+- 가족 생성/합류 API의 최종 응답 필드명 — 현재 프론트는 `inviteCode`/`invite_code`/`code`, `familyName`/`family_name` 등 주요 alias를 허용하고, 합류 요청 body는 기존 프론트 관례에 맞춰 `{ inviteCode }`로 전송
 - 카카오 로그인 코드 교환 응답의 최종 토큰 필드명 — 현재 프론트는 `accessToken`, `access_token`, `token`, `data.accessToken`, `data.access_token`을 허용하고 토큰이 없으면 실패 처리
 - 질문을 자녀가 부모에게 "보내는" 쪽 API (Answer API 문서는 수신자 측만 다룸) — F-08의 "상대방에게 질문하기" 버튼도 같은 이유로 `/questions/new`(미구현) 스텁 이동만 함
 - 로그인 토큰 저장 방식은 MVP 기준 `localStorage`의 `damso_access_token` 키를 사용 (`src/lib/auth/token.ts`). 추후 보안 정책 확정 시 httpOnly cookie 등으로 재검토 필요

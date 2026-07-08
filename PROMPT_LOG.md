@@ -6,6 +6,26 @@
 
 ## 2026-07-08
 
+- **프롬프트 요약**: `/onboarding/family-invite`의 Figma 03 카카오톡 연결 · 가족 초대 화면과 불일치한 UI 정정
+- **작업 구현 요약**: 모바일 앱 단일 컬럼 흐름을 유지하면서 상단 문구, 가족 연결 민트 카드, 낮은 연결 코드 카드, 카카오톡 초대 안내 카드, 가로 2버튼 footer 순서가 Figma 목표 구조와 맞도록 세부 여백·버튼·카드 표현을 재조정. 공유 취소는 오류 메시지로 노출하지 않도록 취소 판정을 보강하고, inviteCode 조회/가족 생성 API 흐름은 유지
+- **변경점**: `src/components/onboarding/FamilyInviteScreen.tsx`, `PROMPT_LOG.md` 수정
+- **검증 결과**: `npm run lint`, `npm run build` 통과
+
+- **프롬프트 요약**: `/onboarding/family-invite` 화면을 Figma 03 카카오톡 연결 · 가족 초대 화면 기준으로 정정
+- **작업 구현 요약**: 기존의 큰 초대 코드 복사 카드 중심 UI를 가족 연결 카드, 낮은 연결 코드 카드, 카카오톡 초대 안내 카드, 가로 2버튼 footer 구조로 재구성. `public/children.png`, `public/father.png`를 원형 아바타로 표시하고, 기존 `getMyFamilyInvitation`/`createFamily` 초대 코드 조회·생성 로직과 Web Share/clipboard fallback은 유지하되 공유 취소는 오류 메시지로 노출하지 않도록 처리
+- **변경점**: `src/components/onboarding/FamilyInviteScreen.tsx`, `src/app/onboarding/family-invite/page.tsx` 추가, `src/app/family/create/page.tsx`를 동일 화면 재사용으로 교체, `PROMPT_LOG.md` 수정
+- **검증 결과**: `npm run lint`, `npm run build` 통과
+
+- **프롬프트 요약**: `/family/create` 접속 시 Not Found 발생 수정
+- **작업 구현 요약**: 라우트맵에서 계획되어 있었지만 미구현이던 가족 생성/초대 화면(`/family/create`)과 초대 코드 합류 화면(`/family/join`)을 추가. 가족 API 클라이언트(`POST /api/v1/families`, `GET /api/v1/families/me/invitation`, `GET /api/v1/families/invitations/{invite_code}`, `POST /api/v1/families/join`)를 추가하고, 초대 코드 표시/복사/공유 fallback/코드 검증/합류 요청/401 로그인 이동을 연결
+- **변경점**: `src/lib/api/families.ts`, `src/app/family/create/page.tsx`, `src/app/family/join/page.tsx` 추가, `docs/route-map.md`, `PROMPT_LOG.md` 수정
+- **검증 결과**: `npm run lint`, `npm run build` 통과
+
+- **프롬프트 요약**: `/onboarding/role` 선택 완료 시 역할 저장 API 연동
+- **작업 구현 요약**: OpenAPI 기준 `PATCH /api/v1/users/me/role` 클라이언트를 추가하고, 역할 선택 CTA에서 선택한 `child`/`mother`/`father` 값을 저장하도록 연결. 저장 중 로딩/비활성화 상태와 401/422 오류 메시지를 추가하고, 성공 후 `GET /api/v1/users/me/onboarding` 결과에 따라 가족 연결 완료 시 `/`, 미완료 시 `/family/create`로 이동
+- **변경점**: `src/lib/api/users.ts`, `src/app/onboarding/role/page.tsx`, `docs/route-map.md`, `PROMPT_LOG.md` 수정
+- **검증 결과**: `npm run lint`, `npm run build` 통과
+
 - **프롬프트 요약**: 로그인 후 `/onboarding/role` 역할 선택 화면 구현
 - **작업 구현 요약**: 약관 동의 이후 이동하는 역할 선택 라우트를 추가하고, 자녀/아버지/어머니 카드 3개와 기본 `child` 선택 상태를 구현. 선택된 카드만 세이지 배경과 `선택됨` pill로 표시되며 CTA는 현재 role 값을 콘솔에 출력하고 추후 역할 저장 API 연동 TODO를 남김
 - **변경점**: `src/app/onboarding/role/page.tsx`, `PROMPT_LOG.md` 수정

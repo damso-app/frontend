@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Avatar, Badge, Button, Card } from "@/components/ui";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
-
-type Role = "child" | "father" | "mother";
+import { ApiError } from "@/lib/api/client";
+import { getMyOnboardingStatus, updateMyRole } from "@/lib/api/users";
+import type { UserRole } from "@/lib/api/users";
+import { clearAccessToken, getAccessToken } from "@/lib/auth/token";
 
 interface RoleOption {
-  role: Role;
+  role: UserRole;
   title: string;
   description: string;
   imageSrc: string;
@@ -39,12 +42,50 @@ const roleOptions: RoleOption[] = [
   },
 ];
 
-export default function RolePage() {
-  const [selectedRole, setSelectedRole] = useState<Role>("child");
+function getRoleErrorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    if (error.status === 401) return "로그인이 필요합니다.";
+    if (error.status === 422) return "역할 선택값을 확인해주세요.";
+  }
 
-  const handleComplete = () => {
-    // TODO: PATCH /api/v1/users/me/role API와 연결해 선택한 역할을 저장한다.
-    console.log("[RolePage] selected role:", selectedRole);
+  return "역할을 저장하지 못했습니다. 다시 시도해주세요.";
+}
+
+export default function RolePage() {
+  const router = useRouter();
+  const [selectedRole, setSelectedRole] = useState<UserRole>("child");
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleComplete = async () => {
+    if (isSaving) return;
+
+    const token = getAccessToken();
+
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMessage("");
+
+    try {
+      await updateMyRole({ role: selectedRole });
+      const onboardingStatus = await getMyOnboardingStatus();
+
+      router.push(onboardingStatus.familyConnected || onboardingStatus.onboardingCompleted ? "/" : "/family/create");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        clearAccessToken();
+        router.replace("/login");
+        return;
+      }
+
+      setErrorMessage(getRoleErrorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -71,9 +112,20 @@ export default function RolePage() {
         padding: "var(--space-xxxl) var(--page-padding-mobile) max(var(--space-lg), env(safe-area-inset-bottom))",
       }}
       footer={
-        <Button size="lg" fullWidth onClick={handleComplete}>
-          선택 완료
-        </Button>
+        <>
+          {errorMessage && (
+            <p
+              role="alert"
+              className="text-caption"
+              style={{ margin: 0, textAlign: "center", color: "var(--color-error)" }}
+            >
+              {errorMessage}
+            </p>
+          )}
+          <Button size="lg" fullWidth loading={isSaving} disabled={isSaving} onClick={handleComplete}>
+            선택 완료
+          </Button>
+        </>
       }
     >
       <div role="radiogroup" aria-label="역할 선택" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -82,6 +134,7 @@ export default function RolePage() {
             key={option.role}
             option={option}
             selected={selectedRole === option.role}
+            disabled={isSaving}
             onSelect={() => setSelectedRole(option.role)}
           />
         ))}
@@ -93,16 +146,24 @@ export default function RolePage() {
 function RoleCard({
   option,
   selected,
+  disabled,
   onSelect,
 }: {
   option: RoleOption;
   selected: boolean;
+  disabled: boolean;
   onSelect: () => void;
 }) {
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) return;
     if (event.key !== "Enter" && event.key !== " ") return;
 
     event.preventDefault();
+    onSelect();
+  };
+
+  const handleSelect = () => {
+    if (disabled) return;
     onSelect();
   };
 
@@ -114,14 +175,16 @@ function RoleCard({
       bg={selected ? "var(--color-sage-50)" : "var(--color-cream-100)"}
       role="radio"
       aria-checked={selected}
-      tabIndex={0}
-      onClick={onSelect}
+      aria-disabled={disabled}
+      tabIndex={disabled ? -1 : 0}
+      onClick={disabled ? undefined : handleSelect}
       onKeyDown={handleKeyDown}
       style={{
         minHeight: "116px",
         border: selected ? "1.5px solid var(--color-sage-300)" : "1px solid var(--hairline-soft)",
         borderRadius: "var(--radius-xl)",
         outline: "none",
+        opacity: disabled ? 0.72 : 1,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-md)" }}>
