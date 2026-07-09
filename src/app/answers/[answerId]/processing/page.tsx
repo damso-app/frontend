@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { BottomNav, Button, Card } from "@/components/ui";
 import { getAnswerClip } from "@/lib/api/answers";
 
-// Figma 목업상의 표시값. 실제 평균 AI 처리 시간이 확인되면 조정한다.
-const ESTIMATED_SECONDS = 3;
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 60000;
 
@@ -68,7 +66,6 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
   }, [completed]);
 
   const elapsedSec = elapsedMs / 1000;
-  const progressRatio = completed ? 1 : Math.min(0.96, elapsedSec / ESTIMATED_SECONDS);
 
   return (
     <div
@@ -101,7 +98,7 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
           정리하고 있어요
         </h1>
         <p className="text-body-sm" style={{ marginTop: "8px" }}>
-          소요시간 기준으로 정리 진행 상태를 보여줍니다.
+          AI가 답변을 정리하는 동안 잠시만 기다려주세요.
         </p>
       </div>
 
@@ -133,22 +130,30 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
           className="relative mt-4 w-full overflow-hidden"
           style={{ height: "10px", background: "var(--color-cream-200)", borderRadius: "var(--radius-full)" }}
         >
-          <div
-            className="absolute left-0 top-0 h-full"
-            style={{
-              width: `${progressRatio * 100}%`,
-              background: "var(--color-sage-400)",
-              borderRadius: "var(--radius-full)",
-              transition: "width 200ms linear",
-            }}
-          />
+          {completed ? (
+            <div
+              className="absolute left-0 top-0 h-full"
+              style={{
+                width: "100%",
+                background: "var(--color-sage-400)",
+                borderRadius: "var(--radius-full)",
+                transition: "width 200ms linear",
+              }}
+            />
+          ) : (
+            <div
+              className="absolute top-0 h-full"
+              style={{
+                background: "var(--color-sage-400)",
+                borderRadius: "var(--radius-full)",
+                animation: "memoir-progress-indeterminate 1.4s ease-in-out infinite",
+              }}
+            />
+          )}
         </div>
 
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-2">
           <span className="text-caption">{elapsedSec.toFixed(1)}초 경과</span>
-          <span className="text-caption" style={{ color: "var(--text-muted)" }}>
-            예상 {ESTIMATED_SECONDS}초
-          </span>
         </div>
 
         {completed && (

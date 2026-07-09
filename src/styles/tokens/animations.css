@@ -3,3 +3,18 @@
     transform: rotate(360deg);
   }
 }
+
+@keyframes memoir-progress-indeterminate {
+  0% {
+    left: -40%;
+    width: 40%;
+  }
+  50% {
+    left: 30%;
+    width: 40%;
+  }
+  100% {
+    left: 100%;
+    width: 40%;
+  }
+}
