@@ -6,6 +6,12 @@
 
 ## 2026-07-10
 
+- **프롬프트 요약**: F-13(설정, Figma node-id 68:177)/F-17(데이터 관리, node-id 84:106) 기준 `/settings` 구현
+- **작업 구현 요약**: `/settings`(F-13) — 프로필 카드(역할 기반 아바타/초기화 텍스트), "연결된 가족"은 `getHomeQuestionSummary()`의 `connectedMembers`로 실제 연결 상태 표시, "저장 기본값"/"알림"은 대응 API가 없어 Figma 고정 문구, "저장 기본값" 카드를 탭하면 `/settings/data`로 이동, "가족 초대하기" 버튼은 기존 `FamilyInviteScreen`(`/onboarding/family-connect`) 재사용, "권한 관리"는 목적지 미정 TODO. `/settings/data`(F-17) — 데이터 내보내기/GIF 관리/삭제 안내 카드, "내보내기"/"삭제 요청" 버튼은 백엔드 API 없어 안내 문구만 표시. 이걸로 전 화면 BottomNav의 "설정" 탭이 더 이상 404 안 남
+- **변경점**: `src/app/settings/page.tsx`, `src/app/settings/data/page.tsx` 추가, `docs/route-map.md` 갱신
+
+## 2026-07-10
+
 - **프롬프트 요약**: 질문→목록→영상답변→제출→AI처리→다이어리→상세 전체 플로우 라우팅 연결 검토
 - **작업 구현 요약**: 전체 화면(F-05~F-11)의 라우팅/API 시그니처를 코드로 추적해 연결 자체는 정상임을 확인. 그 과정에서 `next.config.ts`/`src/lib/api/client.ts`가 `NEXT_PUBLIC_API_BASE_URL`을 요구하는데 `.env`엔 옛 이름 `NEXT_PUBLIC_API_URL`만 있어 `next build`가 config 로드 단계에서 즉시 실패하는 치명적 문제 발견(실제 빌드로 재현 확인) — `.env` 이름 수정, Vercel 프로젝트 환경변수도 동일하게 바꿔야 함을 안내. 그 외 자잘한 문제 3건 수정: (1) `/questions/new` BottomNav가 `activeId="home"`으로 잘못 강조되던 것 `"qna"`로 수정 (2) `/questions/{id}` 상세에서 이미 답변/취소/만료된 질문일 때 버튼만 비활성화되고 이유가 안 보이던 것에 안내 문구 추가 (3) `getAnswerClip`이 응답을 무검증 캐스팅만 하던 것을 다른 정규화 함수들과 같은 패턴(`normalizeAnswerClip`)으로 방어적 파싱하도록 변경
 - **변경점**: `.env`(gitignore, 로컬만), `src/app/questions/new/page.tsx`, `src/app/questions/[questionSendId]/page.tsx`, `src/lib/api/answers.ts` 수정
