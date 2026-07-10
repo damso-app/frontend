@@ -150,6 +150,7 @@ export default function FourCutGroupPage({ params }: { params: Promise<{ date: s
               {group.clips.map((clip) => {
                 const detail = clipDetails[clip.answerId];
                 const isCompleted = clip.status === "completed";
+                const isFailed = clip.status === "failed";
                 return (
                   <button
                     key={clip.answerId}
@@ -175,7 +176,11 @@ export default function FourCutGroupPage({ params }: { params: Promise<{ date: s
                         top: "12px",
                         height: "64px",
                         borderRadius: "var(--radius-md)",
-                        background: detail?.thumbnailUrl ? undefined : "var(--color-sage-100)",
+                        background: detail?.thumbnailUrl
+                          ? undefined
+                          : isFailed
+                            ? "var(--color-error-bg)"
+                            : "var(--color-sage-100)",
                         backgroundImage: detail?.thumbnailUrl ? `url(${detail.thumbnailUrl})` : undefined,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
@@ -201,7 +206,7 @@ export default function FourCutGroupPage({ params }: { params: Promise<{ date: s
                     )}
                     <div className="absolute text-center" style={{ left: 0, right: 0, bottom: "10px" }}>
                       <p style={{ fontFamily: "var(--font-sans)", fontSize: "13px", fontWeight: "var(--weight-medium)", color: "#fff" }}>
-                        {isCompleted ? detail?.title ?? "답변" : "처리 중"}
+                        {isCompleted ? detail?.title ?? "답변" : isFailed ? "처리 실패" : "처리 중"}
                       </p>
                     </div>
                   </button>
