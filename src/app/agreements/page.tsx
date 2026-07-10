@@ -6,9 +6,10 @@ import { Button, Card } from "@/components/ui";
 import { AgreementCheckbox } from "@/components/onboarding/AgreementCheckbox";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { ApiError } from "@/lib/api/client";
-import { getUserAgreements, saveUserAgreements } from "@/lib/api/users";
+import { getMyOnboardingStatus, getUserAgreements, saveUserAgreements } from "@/lib/api/users";
 import type { AgreementType } from "@/lib/api/users";
 import { clearAccessToken, getAccessToken } from "@/lib/auth/token";
+import { getNextOnboardingRoute } from "@/lib/onboarding/next-route";
 
 const AGREEMENTS = [
   {
@@ -122,7 +123,8 @@ export default function AgreementsPage() {
           agreed: true,
         })),
       });
-      router.push("/onboarding/role");
+      const onboardingStatus = await getMyOnboardingStatus();
+      router.push(getNextOnboardingRoute(onboardingStatus));
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         clearAccessToken();

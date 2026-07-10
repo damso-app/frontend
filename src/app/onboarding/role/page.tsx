@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { Avatar, Badge, Button, Card } from "@/components/ui";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { ApiError } from "@/lib/api/client";
+import { joinFamily } from "@/lib/api/families";
 import { getMyOnboardingStatus, updateMyRole } from "@/lib/api/users";
 import type { UserRole } from "@/lib/api/users";
+import { clearPendingInviteCode, getPendingInviteCode, getPendingRecommendedRole } from "@/lib/auth/pending-invite";
 import { clearAccessToken, getAccessToken } from "@/lib/auth/token";
+import { getInviteCodeRoute } from "@/lib/onboarding/next-route";
 
 interface RoleOption {
   role: UserRole;
@@ -53,9 +56,10 @@ function getRoleErrorMessage(error: unknown) {
 
 export default function RolePage() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<UserRole>("child");
+  const [selectedRole, setSelectedRole] = useState<UserRole>(() => getPendingRecommendedRole() ?? "child");
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const pendingInviteCode = getPendingInviteCode();
 
   const handleComplete = async () => {
     if (isSaving) return;
@@ -74,11 +78,31 @@ export default function RolePage() {
       await updateMyRole({ role: selectedRole });
       const onboardingStatus = await getMyOnboardingStatus();
 
-      router.push(onboardingStatus.familyConnected ? "/" : "/onboarding/family-connect");
+      if (onboardingStatus.familyConnected) {
+        clearPendingInviteCode();
+        router.replace("/");
+        return;
+      }
+
+      const inviteCode = getPendingInviteCode();
+      if (inviteCode) {
+        await joinFamily({ inviteCode });
+        clearPendingInviteCode();
+        router.replace("/");
+        return;
+      }
+
+      router.push("/onboarding/family-connect");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         clearAccessToken();
         router.replace("/login");
+        return;
+      }
+
+      if (pendingInviteCode) {
+        setErrorMessage("역할은 저장했지만 가족 연결에 실패했습니다. 연결 코드를 다시 확인해주세요.");
+        router.push(getInviteCodeRoute(pendingInviteCode));
         return;
       }
 
@@ -100,9 +124,9 @@ export default function RolePage() {
       }
       description={
         <>
-          역할은 추천 질문과 홈 문구를 맞추기 위한 설정입니다.
+          {pendingInviteCode ? "초대 링크에 맞춰 역할을 먼저 설정합니다." : "역할은 추천 질문과 홈 문구를 맞추기 위한 설정입니다."}
           <br />
-          부모와 자녀 모두 질문하고 답변할 수 있습니다.
+          {pendingInviteCode ? "선택 완료 후 가족과 자동으로 연결됩니다." : "부모와 자녀 모두 질문하고 답변할 수 있습니다."}
         </>
       }
       contentJustify="flex-start"

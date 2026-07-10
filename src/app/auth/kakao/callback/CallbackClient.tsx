@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { exchangeLoginCode } from "@/lib/api/auth";
+import { getMyOnboardingStatus } from "@/lib/api/users";
 import { saveAccessToken } from "@/lib/auth/token";
+import { getNextOnboardingRoute } from "@/lib/onboarding/next-route";
 
 interface CallbackClientProps {
   loginCode: string | null;
@@ -29,8 +31,8 @@ export function CallbackClient({ loginCode }: CallbackClientProps) {
       try {
         const { accessToken } = await exchangeLoginCode(code);
         saveAccessToken(accessToken);
-        // TODO: 필수 동의 완료 여부 확인 API가 확정되면 여기서 다음 목적지를 분기한다.
-        router.replace("/agreements");
+        const onboardingStatus = await getMyOnboardingStatus();
+        router.replace(getNextOnboardingRoute(onboardingStatus));
       } catch {
         setErrorMessage("로그인 처리에 실패했어요. 다시 시도해주세요.");
       }

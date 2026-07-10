@@ -1,7 +1,6 @@
 
-
 const API_BASE = "/api";
-import { buildApiRequestUrl, getApiBaseUrl, parseApiJsonResponse, throwApiErrorFromResponse } from "./client";
+import { buildApiRequestUrl, parseApiJsonResponse, throwApiErrorFromResponse } from "./client";
 
 export interface KakaoLoginUrlResult {
   loginUrl: string;

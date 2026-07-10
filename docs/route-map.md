@@ -7,10 +7,10 @@
 | # | 플로우 단계 | 라우트 | 연동 API | 상태 |
 | --- | --- | --- | --- | --- |
 | 1 | 온보딩 | `/onboarding` | – | 미구현 |
-| 2 | 카카오 로그인 진입 | `/login` | 카카오 OAuth + 백엔드 콜백 (문서 확인 필요) | 미구현 |
-| 3 | 역할 선택 (자식/엄마/아빠) | `/onboarding/role` | 문서 확인 필요 | 미구현 |
-| 4 | 가족 생성 · 초대 코드 공유 | `/family/create` | 문서 확인 필요 | 미구현 |
-| 4 | 초대 코드로 가족 합류 | `/family/join` | 문서 확인 필요 | 미구현 |
+| 2 | 카카오 로그인 진입 | `/login`, `/auth/kakao/callback` | `GET /api/v1/auth/kakao/login-url`, `POST /api/v1/auth/login-code/exchange`, `GET /api/v1/users/me/onboarding` | **구현됨**. 로그인 후 약관/역할/가족 연결 상태에 따라 다음 온보딩 라우트로 분기 |
+| 3 | 역할 선택 (자식/엄마/아빠) | `/onboarding/role` | `PATCH /api/v1/users/me/role`, `GET /api/v1/users/me/onboarding` | **구현됨**. 초대 링크로 들어온 경우 추천 역할을 기본 선택하고 역할 저장 후 가족 합류까지 이어서 처리 |
+| 4 | 가족 생성 · 초대 코드 공유 | `/onboarding/family-connect`, `/onboarding/family-invite`, `/family/create` | `POST /api/v1/families`, `GET /api/v1/families/me/invitation`, `GET /api/v1/users/me/onboarding` | **구현됨**. 카카오 공유 텍스트에 `/onboarding/family-code/{inviteCode}` 링크와 초대자 역할 힌트 query를 포함 |
+| 4 | 초대 코드로 가족 합류 | `/onboarding/family-code`, `/onboarding/family-code/[inviteCode]`, `/family/join`, `/family/join/[inviteCode]`, `/family/invite/[inviteCode]` | `GET /api/v1/families/invitations/{inviteCode}`, `POST /api/v1/families/join` | **구현됨**. 링크 수신자는 초대 코드를 보관한 뒤 로그인→약관→역할 설정을 거쳐 자동 합류하고 홈으로 이동 |
 | 5 | 홈 | `/` | `GET /api/v1/home/summary` | **구현됨** (`src/app/page.tsx`). "질문 만들기" CTA는 `/questions/new`로 이동 |
 | 5 | 질문 목록 확인 | `/questions` | `GET /api/v1/answers/questions` | **구현됨** (`src/app/questions/page.tsx`). BottomNav의 `qna` 탭 목적지이며 받은 질문 리스트만 표시 |
 | 5 | 질문 상세 / 읽음 처리 | `/questions/[questionSendId]` | `GET /api/v1/answers/questions/{id}`, `PATCH .../read` | **구현됨** (`src/app/questions/[questionSendId]/page.tsx`). 받은 질문 선택 시 진입 |
@@ -70,3 +70,4 @@
 - F-10(Figma node-id 68:42)은 답변자 role 칩("엄마 답변" 등)을 보여주는데, `GET /api/v1/clips`(`ClipGridGroup`/`ClipGridItem`)엔 답변자 role 필드가 없어 프론트에서 못 만듦(2026-07-10 기준 미해결). 날짜 칩은 우선 연월(`2026.07`) 포맷으로 맞춰둠. 미니컷별 영상 길이는 `GET /api/v1/answers/{id}/clip`(`AnswerClip.videoDurationSeconds`)에 2026-07-10부로 추가돼 내려오는 것 확인, F-10에 반영함
 - F-13(`/settings`)의 "저장 기본값"/"알림" 카드, "권한 관리" 버튼 목적지 API 없음. F-17(`/settings/data`)의 "내보내기"/"삭제 요청" 버튼도 대응 API 없어 지금은 안내 문구만 표시하는 스텁 상태 — 백엔드 스펙 나오면 실제 연동 필요
 - F-08 처리 화면: `GET /api/v1/answers/{answer_id}/progress`(`AnswerProgressResponse`: `status`/`progress`/`currentStepLabel`/`estimatedRemainingSeconds`/`aiJobStatus`)가 실제 배포돼 있는 것 확인(2026-07-10), 기존 `/v1/clips` 우회 폴링을 이걸로 교체. `status=processing`인데 `aiJobStatus=completed`면 AI 작업은 끝났고 콜백(DB 반영)만 기다리는 중이라 "마무리 중"으로 구분 표시. `progress`가 없을 때는 예상 총 소요시간(30초) 기준 경과시간 비율로 진행바를 대략 채움(최대 95%, 실제 완료 시에만 100%)
+- 가족 초대 링크의 역할 자동 선택은 `inviterRole`/`recommendedRole` query 또는 초대 검증 응답 필드(`inviterRole`/`recommendedRole`, snake_case 포함)를 우선 사용한다. 초대자가 부모(`mother`/`father`)면 수신자는 `child`로 추천하고, 초대자가 자녀(`child`)면 부모 세부 역할을 알 수 없어 `mother`를 기본 추천값으로 둔다. 실제 엄마/아빠 구분까지 자동화하려면 백엔드 초대 생성 시 대상 역할(`recipientRole`)을 명시해 내려줘야 한다.

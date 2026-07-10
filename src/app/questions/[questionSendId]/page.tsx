@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, BookOpen, Home, MessageCircleQuestion, Settings } from "lucide-react";
 import { BottomNav, Button, Card } from "@/components/ui";
 import {
   getReceivedQuestionDetail,
@@ -260,7 +261,7 @@ export default function ReceivedQuestionDetailPage({
 
         <Card variant="base" elevation="subtle" padding="var(--space-md)" bg="var(--surface)">
           <div className="flex items-start gap-2">
-            <AccentDot />
+            <RedDot />
             <div>
               <p style={{ fontFamily: "var(--font-sans)", fontSize: "18px", fontWeight: "var(--weight-medium)", color: "var(--text-1)" }}>
                 프라이버시
@@ -281,18 +282,19 @@ export default function ReceivedQuestionDetailPage({
       >
         질문에 답변하기
       </Button>
+        </>
+      )}
 
-        <BottomNav
-          items={NAV_ITEMS}
-          activeId="qna"
-          onChange={(id) => {
-            if (id === "home") router.push("/");
-            if (id === "qna") router.push("/questions");
-            if (id === "diary") router.push("/diary");
-            if (id === "settings") router.push("/settings");
-          }}
-        />
-      </div>
+      <BottomNav
+        items={NAV_ITEMS}
+        activeId="qna"
+        onChange={(id) => {
+          if (id === "home") router.push("/");
+          if (id === "qna") router.push("/questions");
+          if (id === "diary") router.push("/diary");
+          if (id === "settings") router.push("/settings");
+        }}
+      />
     </div>
   );
 }

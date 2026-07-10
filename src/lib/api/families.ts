@@ -5,6 +5,7 @@ import {
   getMockJoinFamilyResponse,
   setMockFamilyConnected,
 } from "./family-mock";
+import type { UserRole } from "./users";
 
 export interface FamilyInvitation {
   familyId?: number;
@@ -13,6 +14,8 @@ export interface FamilyInvitation {
   inviteUrl?: string;
   shareText?: string;
   expiresAt?: string | null;
+  inviterRole?: UserRole | null;
+  recommendedRole?: UserRole | null;
 }
 
 export interface FamilyInvitationValidation {
@@ -21,6 +24,8 @@ export interface FamilyInvitationValidation {
   inviteCode: string;
   available?: boolean;
   expiresAt?: string | null;
+  inviterRole?: UserRole | null;
+  recommendedRole?: UserRole | null;
 }
 
 export interface JoinFamilyRequest {
@@ -63,6 +68,14 @@ function getBoolean(source: ApiRecord, keys: string[]) {
   return undefined;
 }
 
+function normalizeRole(value: unknown): UserRole | null {
+  return value === "child" || value === "mother" || value === "father" ? value : null;
+}
+
+export function normalizeInviteCodeForApi(inviteCode: string) {
+  return inviteCode.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+}
+
 function normalizeInvitationResponse(input: unknown): FamilyInvitation {
   const source = input && typeof input === "object" ? (input as ApiRecord) : {};
   const inviteCode = getString(source, ["inviteCode", "invite_code", "code", "invitationCode", "invitation_code"]);
@@ -78,6 +91,10 @@ function normalizeInvitationResponse(input: unknown): FamilyInvitation {
     inviteUrl: getString(source, ["inviteUrl", "invite_url", "url"]),
     shareText: getString(source, ["shareText", "share_text"]),
     expiresAt: getString(source, ["expiresAt", "expires_at"]) ?? null,
+    inviterRole: normalizeRole(source.inviterRole ?? source.inviter_role ?? source.ownerRole ?? source.owner_role),
+    recommendedRole: normalizeRole(
+      source.recommendedRole ?? source.recommended_role ?? source.recipientRole ?? source.recipient_role,
+    ),
   };
 }
 
@@ -92,6 +109,10 @@ function normalizeInvitationValidationResponse(input: unknown, fallbackInviteCod
     inviteCode,
     available: getBoolean(source, ["available", "valid", "isAvailable", "is_available"]),
     expiresAt: getString(source, ["expiresAt", "expires_at"]) ?? null,
+    inviterRole: normalizeRole(source.inviterRole ?? source.inviter_role ?? source.ownerRole ?? source.owner_role),
+    recommendedRole: normalizeRole(
+      source.recommendedRole ?? source.recommended_role ?? source.recipientRole ?? source.recipient_role,
+    ),
   };
 }
 
@@ -140,9 +161,10 @@ export async function getMyFamilyInvitation() {
 
 export async function getFamilyInvitation(inviteCode: string) {
   try {
-    const response = await apiFetch<unknown>(`/v1/families/invitations/${encodeURIComponent(inviteCode)}`);
+    const normalizedInviteCode = normalizeInviteCodeForApi(inviteCode);
+    const response = await apiFetch<unknown>(`/v1/families/invitations/${encodeURIComponent(normalizedInviteCode)}`);
 
-    return normalizeInvitationValidationResponse(response, inviteCode);
+    return normalizeInvitationValidationResponse(response, normalizedInviteCode);
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) throw error;
 
@@ -152,20 +174,22 @@ export async function getFamilyInvitation(inviteCode: string) {
 }
 
 export async function joinFamily(input: JoinFamilyRequest) {
+  const inviteCode = normalizeInviteCodeForApi(input.inviteCode);
+
   try {
     const response = await apiFetch<unknown>("/v1/families/join", {
       method: "POST",
-      body: JSON.stringify(input),
+      body: JSON.stringify({ inviteCode }),
     });
     const normalizedResponse = normalizeJoinFamilyResponse(response);
 
-    setMockFamilyConnected(input.inviteCode);
+    setMockFamilyConnected(inviteCode);
     return normalizedResponse;
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) throw error;
 
     console.warn("[Families] Falling back to mock family join", error);
-    setMockFamilyConnected(input.inviteCode);
+    setMockFamilyConnected(inviteCode);
     return getMockJoinFamilyResponse();
   }
 }
