@@ -8,6 +8,8 @@ import { Button } from "@/components/ui";
 import { ApiError } from "@/lib/api/client";
 import { createFamily, getMyFamilyInvitation } from "@/lib/api/families";
 import type { FamilyInvitation } from "@/lib/api/families";
+import { getMyOnboardingStatus } from "@/lib/api/users";
+import type { UserRole } from "@/lib/api/users";
 import { clearAccessToken, getAccessToken } from "@/lib/auth/token";
 
 const INVITE_CODE_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -53,6 +55,23 @@ function isShareCanceled(error: unknown) {
   return name.includes("abort") || message.includes("cancel") || message.includes("abort");
 }
 
+function getShareableInviteUrl(invitation: FamilyInvitation | null, inviterRole: UserRole | null) {
+  if (typeof window === "undefined" || !invitation?.inviteCode) return invitation?.inviteUrl;
+
+  const inviteUrl = new URL(`/onboarding/family-code/${encodeURIComponent(invitation.inviteCode)}`, window.location.origin);
+  const role = invitation.inviterRole ?? inviterRole;
+
+  if (role) {
+    inviteUrl.searchParams.set("inviterRole", role);
+  }
+
+  if (invitation.recommendedRole) {
+    inviteUrl.searchParams.set("recommendedRole", invitation.recommendedRole);
+  }
+
+  return inviteUrl.toString();
+}
+
 export function FamilyInviteScreen() {
   const router = useRouter();
   const didFetchRef = useRef(false);
@@ -62,19 +81,24 @@ export function FamilyInviteScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const [noticeMessage, setNoticeMessage] = useState("");
   const [fallbackInviteCode, setFallbackInviteCode] = useState("");
+  const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
 
   const displayInviteCode = invitation?.inviteCode ?? fallbackInviteCode;
+  const shareableInviteUrl = useMemo(() => getShareableInviteUrl(invitation, currentRole), [currentRole, invitation]);
 
   const inviteText = useMemo(() => {
     if (!invitation) {
       return fallbackInviteCode ? `담소 가족 초대 코드: ${fallbackInviteCode}` : "";
     }
 
-    return (
-      invitation.shareText ??
-      `담소 가족 초대 코드: ${invitation.inviteCode}${invitation.inviteUrl ? `\n${invitation.inviteUrl}` : ""}`
-    );
-  }, [fallbackInviteCode, invitation]);
+    if (invitation.shareText) {
+      return shareableInviteUrl && !invitation.shareText.includes(shareableInviteUrl)
+        ? `${invitation.shareText}\n${shareableInviteUrl}`
+        : invitation.shareText;
+    }
+
+    return `담소 가족 초대 코드: ${invitation.inviteCode}${shareableInviteUrl ? `\n${shareableInviteUrl}` : ""}`;
+  }, [fallbackInviteCode, invitation, shareableInviteUrl]);
 
   const loadInvitation = useCallback(async () => {
     const token = getAccessToken();
@@ -89,6 +113,9 @@ export function FamilyInviteScreen() {
     setNoticeMessage("");
 
     try {
+      const onboardingStatus = await getMyOnboardingStatus();
+      setCurrentRole(onboardingStatus.role);
+
       try {
         const existingInvitation = await getMyFamilyInvitation();
         setInvitation(existingInvitation);
@@ -147,8 +174,8 @@ export function FamilyInviteScreen() {
           text: inviteText,
         };
 
-        if (invitation?.inviteUrl) {
-          shareData.url = invitation.inviteUrl;
+        if (shareableInviteUrl || invitation?.inviteUrl) {
+          shareData.url = shareableInviteUrl ?? invitation?.inviteUrl;
         }
 
         await navigator.share(shareData);

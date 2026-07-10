@@ -6,6 +6,13 @@
 
 ## 2026-07-10
 
+- **프롬프트 요약**: 카카오톡 가족 초대 링크 수신자가 로그인·약관·역할 선택을 거쳐 자동으로 가족 연결 후 홈으로 이동하는 온보딩 플로우 구현
+- **작업 구현 요약**: 초대 공유 URL을 `/onboarding/family-code/{inviteCode}` 형태로 생성하고 초대자 역할 힌트(`inviterRole`, 필요 시 `recommendedRole`)를 query로 포함. 링크 수신 시 초대 코드를 localStorage에 보관해 로그인/약관 이동 중에도 유지하고, 카카오 콜백과 약관 완료 후 `GET /users/me/onboarding` 기준으로 다음 온보딩 단계 분기. 역할 화면은 pending invite가 있으면 추천 역할을 기본 선택하고, 역할 저장 후 `POST /families/join`을 자동 호출해 홈으로 이동. 기존 동적 초대 라우트(`/family/invite/[inviteCode]`, `/family/join/[inviteCode]`, `/onboarding/family-code/[inviteCode]`)도 같은 자동 연결 플로우로 통일. 초대 코드 API 정규화와 역할 힌트 응답 필드 파싱을 추가하고, 빌드를 막던 질문 상세 JSX 닫힘/아이콘 import 오류도 함께 복구
+- **변경점**: `src/components/onboarding/FamilyInviteScreen.tsx`, `src/components/onboarding/FamilyCodeScreen.tsx`, `src/app/auth/kakao/callback/CallbackClient.tsx`, `src/app/agreements/page.tsx`, `src/app/onboarding/role/page.tsx`, `src/app/onboarding/family-code/[inviteCode]/page.tsx`, `src/app/family/invite/[inviteCode]/page.tsx`, `src/app/family/join/[inviteCode]/page.tsx`, `src/lib/api/families.ts`, `src/lib/auth/pending-invite.ts`, `src/lib/onboarding/next-route.ts`, `src/lib/api/auth.ts`, `src/app/questions/[questionSendId]/page.tsx`, `docs/route-map.md`, `PROMPT_LOG.md` 수정
+- **검증**: `npm run lint`, `npm run build` 통과
+
+## 2026-07-10
+
 - **프롬프트 요약**: F-10 네컷 그리드 썸네일이 잘려서 얼굴이 안 보이는 문제 수정 — 정사각형으로 확대, 여백 최소화
 - **작업 구현 요약**: 미니컷 카드가 `height: 124px` 고정 박스 안에 썸네일을 `12px` 마진을 두고 `64px` 높이로만 작게 배치하던 구조였음(가로로 넓고 세로로 아주 짧은 비율이라 `cover` 크롭이 심하게 상하를 잘라 얼굴이 잘림). 카드를 `aspectRatio: 1/1` 정사각형으로 바꾸고 썸네일이 카드 전체(`inset-0`, 마진 없음)를 채우도록 변경. 텍스트 가독성을 위해 썸네일 위에 하단 그라디언트 스크림 추가, 이미지 없는 처리중/실패 상태는 배경이 밝은 톤(sage-100/error-bg)이라 텍스트 색을 흰색 대신 `sage-600`/`error`로 조정
 - **변경점**: `src/app/diary/[date]/page.tsx` 수정

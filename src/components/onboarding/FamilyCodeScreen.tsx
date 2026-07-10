@@ -5,6 +5,8 @@ import {
   type FormEvent,
   type KeyboardEvent,
   type MutableRefObject,
+  useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -12,9 +14,13 @@ import {
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { ApiError } from "@/lib/api/client";
-import { getFamilyInvitation, joinFamily } from "@/lib/api/families";
+import { getFamilyInvitation, joinFamily, normalizeInviteCodeForApi } from "@/lib/api/families";
 import type { FamilyInvitationValidation } from "@/lib/api/families";
+import { getMyOnboardingStatus } from "@/lib/api/users";
+import type { UserRole } from "@/lib/api/users";
+import { clearPendingInviteCode, savePendingInviteCode } from "@/lib/auth/pending-invite";
 import { clearAccessToken, getAccessToken } from "@/lib/auth/token";
+import { getNextOnboardingRoute } from "@/lib/onboarding/next-route";
 import { FamilyConnectionPanel, FamilyOnboardingFrame, InfoBox, PhoneCard } from "./FamilyInviteScreen";
 
 const CODE_LENGTH = 6;
@@ -26,6 +32,12 @@ function formatInviteCode(codeValues: string[]) {
 
 function sanitizeCodeInput(value: string) {
   return value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+}
+
+function getCodeValuesFromRaw(rawValue?: string) {
+  const sanitized = sanitizeCodeInput(rawValue ?? "").slice(0, CODE_LENGTH);
+
+  return Array.from({ length: CODE_LENGTH }, (_, index) => sanitized[index] ?? "");
 }
 
 function getValidateErrorMessage(error: unknown) {
@@ -49,22 +61,33 @@ function getJoinErrorMessage(error: unknown) {
   return "가족에 합류하지 못했습니다. 다시 시도해주세요.";
 }
 
-export function FamilyCodeScreen() {
+export function FamilyCodeScreen({
+  initialInviteCode,
+  initialInviterRole = null,
+  initialRecommendedRole = null,
+}: {
+  initialInviteCode?: string;
+  initialInviterRole?: UserRole | null;
+  initialRecommendedRole?: UserRole | null;
+}) {
   const router = useRouter();
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const [codeValues, setCodeValues] = useState(Array.from({ length: CODE_LENGTH }, () => ""));
+  const didHandleInitialInviteRef = useRef(false);
+  const [codeValues, setCodeValues] = useState(() => getCodeValuesFromRaw(initialInviteCode));
   const [validation, setValidation] = useState<FamilyInvitationValidation | null>(null);
   const [isJoining, setIsJoining] = useState(false);
+  const [isPreparingInvite, setIsPreparingInvite] = useState(() => Boolean(normalizeInviteCodeForApi(initialInviteCode ?? "")));
   const [errorMessage, setErrorMessage] = useState("");
 
   const inviteCode = useMemo(() => formatInviteCode(codeValues), [codeValues]);
   const isComplete = codeValues.every(Boolean);
-  const canSubmit = isComplete && !isJoining;
+  const normalizedInviteCode = useMemo(() => normalizeInviteCodeForApi(inviteCode), [inviteCode]);
+  const canSubmit = isComplete && !isJoining && !isPreparingInvite;
 
-  const handleUnauthorized = () => {
+  const handleUnauthorized = useCallback(() => {
     clearAccessToken();
     router.replace("/login");
-  };
+  }, [router]);
 
   const setCodeFromRaw = (rawValue: string, startIndex = 0) => {
     const sanitized = sanitizeCodeInput(rawValue);
@@ -142,7 +165,7 @@ export function FamilyCodeScreen() {
     setCodeFromRaw(event.clipboardData.getData("text"), index);
   };
 
-  const validateInviteCode = async () => {
+  const validateInviteCode = useCallback(async () => {
     const token = getAccessToken();
 
     if (!token) {
@@ -155,6 +178,12 @@ export function FamilyCodeScreen() {
 
     try {
       const result = await getFamilyInvitation(inviteCode);
+      if (normalizedInviteCode) {
+        savePendingInviteCode(normalizedInviteCode, {
+          inviterRole: result.inviterRole,
+          recommendedRole: result.recommendedRole,
+        });
+      }
       setValidation(result);
       return result;
     } catch (error) {
@@ -166,25 +195,21 @@ export function FamilyCodeScreen() {
       setErrorMessage(getValidateErrorMessage(error));
       return null;
     }
-  };
+  }, [handleUnauthorized, inviteCode, normalizedInviteCode, router]);
 
-  const handleJoin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!canSubmit) return;
-
+  const joinWithCurrentCode = useCallback(async () => {
     const token = getAccessToken();
 
     if (!token) {
       router.replace("/login");
-      return;
+      return false;
     }
 
     setIsJoining(true);
     setErrorMessage("");
 
     try {
-      const validated = validation?.inviteCode === inviteCode ? validation : await validateInviteCode();
+      const validated = normalizeInviteCodeForApi(validation?.inviteCode ?? "") === normalizedInviteCode ? validation : await validateInviteCode();
 
       if (!validated) return;
       if (validated.available === false) {
@@ -192,18 +217,78 @@ export function FamilyCodeScreen() {
         return;
       }
 
-      await joinFamily({ inviteCode });
+      await joinFamily({ inviteCode: normalizedInviteCode });
+      clearPendingInviteCode();
       router.replace("/");
+      return true;
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         handleUnauthorized();
-        return;
+        return false;
       }
 
       setErrorMessage(getJoinErrorMessage(error));
+      return false;
     } finally {
       setIsJoining(false);
     }
+  }, [handleUnauthorized, normalizedInviteCode, router, validateInviteCode, validation]);
+
+  useEffect(() => {
+    if (!initialInviteCode || didHandleInitialInviteRef.current) return;
+    didHandleInitialInviteRef.current = true;
+
+    const normalizedInitialInviteCode = normalizeInviteCodeForApi(initialInviteCode);
+    if (!normalizedInitialInviteCode) {
+      return;
+    }
+
+    savePendingInviteCode(normalizedInitialInviteCode, {
+      inviterRole: initialInviterRole,
+      recommendedRole: initialRecommendedRole,
+    });
+
+    const token = getAccessToken();
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
+    async function continueInviteFlow() {
+      try {
+        const status = await getMyOnboardingStatus();
+        if (!status.requiredAgreementsCompleted || !status.role) {
+          router.replace(getNextOnboardingRoute(status));
+          return;
+        }
+
+        if (status.familyConnected || status.onboardingCompleted) {
+          clearPendingInviteCode();
+          router.replace("/");
+          return;
+        }
+
+        await joinWithCurrentCode();
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          handleUnauthorized();
+          return;
+        }
+
+        setErrorMessage(getJoinErrorMessage(error));
+      } finally {
+        setIsPreparingInvite(false);
+      }
+    }
+
+    void continueInviteFlow();
+  }, [handleUnauthorized, initialInviteCode, initialInviterRole, initialRecommendedRole, joinWithCurrentCode, router]);
+
+  const handleJoin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!canSubmit) return;
+    await joinWithCurrentCode();
   };
 
   return (
@@ -239,7 +324,7 @@ export function FamilyCodeScreen() {
                 <Button
                   size="md"
                   fullWidth
-                  loading={isJoining}
+                  loading={isJoining || isPreparingInvite}
                   disabled={!canSubmit}
                   type="submit"
                   style={{
