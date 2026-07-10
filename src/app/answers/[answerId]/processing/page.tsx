@@ -4,16 +4,24 @@ import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomNav, Button, Card } from "@/components/ui";
 import { getClipGrid } from "@/lib/api/clips";
+import { BookOpen, Home, MessageCircleQuestion, Settings } from "lucide-react";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 60000;
 
 const NAV_ITEMS = [
-  { id: "home", label: "홈" },
-  { id: "qna", label: "질문&답변" },
-  { id: "diary", label: "다이어리" },
-  { id: "settings", label: "설정" },
+  { id: "home", label: "홈", icon: <Home size={14} /> },
+  { id: "qna", label: "질문&답변", icon: <MessageCircleQuestion size={14} /> },
+  { id: "diary", label: "다이어리", icon: <BookOpen size={14} /> },
+  { id: "settings", label: "설정", icon: <Settings size={14} /> },
 ];
+
+const NAV_ROUTES: Record<string, string> = {
+  home: "/",
+  qna: "/questions",
+  diary: "/diary",
+  settings: "/settings",
+};
 
 export default function AnswerProcessingPage({ params }: { params: Promise<{ answerId: string }> }) {
   const { answerId } = use(params);
@@ -21,6 +29,7 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
 
   const [elapsedMs, setElapsedMs] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [completedDate, setCompletedDate] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const startRef = useRef<number | null>(null);
@@ -50,9 +59,12 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
       try {
         const groups = await getClipGrid();
         if (cancelled) return;
-        const entry = groups.flatMap((g) => g.clips).find((c) => c.answerId === answerIdNum);
-        if (entry?.status === "completed") setCompleted(true);
-        else if (entry?.status === "failed") setFailed(true);
+        const group = groups.find((g) => g.clips.some((c) => c.answerId === answerIdNum));
+        const entry = group?.clips.find((c) => c.answerId === answerIdNum);
+        if (entry?.status === "completed") {
+          setCompleted(true);
+          if (group) setCompletedDate(group.date);
+        } else if (entry?.status === "failed") setFailed(true);
       } catch (err) {
         // 네트워크 오류 등 일시적인 문제 — 상태를 단정 짓지 않고 다음 폴링에서 재시도
         console.error("answer status poll failed", err);
@@ -193,7 +205,12 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
       </Card>
 
       <div className="flex items-center justify-center gap-4">
-        <Button variant="secondary" size="lg" disabled={!completed} onClick={() => router.push(`/diary/${answerId}`)}>
+        <Button
+          variant="secondary"
+          size="lg"
+          disabled={!completed || !completedDate}
+          onClick={() => completedDate && router.push(`/diary/${completedDate}/${answerId}`)}
+        >
           답변 영상 보기
         </Button>
         <Button variant="sage" size="lg" onClick={() => router.push("/questions")}>
@@ -234,7 +251,12 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
         상대방에게 질문하기
       </Button>
 
-      <BottomNav items={NAV_ITEMS} activeId="qna" style={{ marginTop: "auto" }} />
+      <BottomNav
+        items={NAV_ITEMS}
+        activeId="qna"
+        onChange={(id) => router.push(NAV_ROUTES[id] ?? "/")}
+        style={{ marginTop: "auto" }}
+      />
     </div>
   );
 }

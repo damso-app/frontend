@@ -5,13 +5,21 @@ import { useRouter } from "next/navigation";
 import { Badge, BottomNav, Card } from "@/components/ui";
 import { getClipGrid } from "@/lib/api/clips";
 import type { ClipGridGroup } from "@/lib/api/clips";
+import { BookOpen, Home, MessageCircleQuestion, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
-  { id: "home", label: "홈" },
-  { id: "qna", label: "질문&답변" },
-  { id: "diary", label: "다이어리" },
-  { id: "settings", label: "설정" },
+  { id: "home", label: "홈", icon: <Home size={14} /> },
+  { id: "qna", label: "질문&답변", icon: <MessageCircleQuestion size={14} /> },
+  { id: "diary", label: "다이어리", icon: <BookOpen size={14} /> },
+  { id: "settings", label: "설정", icon: <Settings size={14} /> },
 ];
+
+const NAV_ROUTES: Record<string, string> = {
+  home: "/",
+  qna: "/questions",
+  diary: "/diary",
+  settings: "/settings",
+};
 
 function formatRelativeDay(dateStr: string) {
   const date = new Date(`${dateStr}T00:00:00`);
@@ -177,7 +185,12 @@ export default function DiaryPage() {
         </div>
       ))}
 
-      <BottomNav items={NAV_ITEMS} activeId="diary" style={{ marginTop: "auto" }} />
+      <BottomNav
+        items={NAV_ITEMS}
+        activeId="diary"
+        onChange={(id) => router.push(NAV_ROUTES[id] ?? "/")}
+        style={{ marginTop: "auto" }}
+      />
     </div>
   );
 }

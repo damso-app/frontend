@@ -3,15 +3,23 @@
 import { use, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomNav, Button, Card } from "@/components/ui";
+import { BookOpen, Home, MessageCircleQuestion, Settings } from "lucide-react";
 
 type RequestState = "idle" | "requesting" | "denied";
 
 const NAV_ITEMS = [
-  { id: "home", label: "홈" },
-  { id: "qna", label: "질문&답변" },
-  { id: "diary", label: "다이어리" },
-  { id: "settings", label: "설정" },
+  { id: "home", label: "홈", icon: <Home size={14} /> },
+  { id: "qna", label: "질문&답변", icon: <MessageCircleQuestion size={14} /> },
+  { id: "diary", label: "다이어리", icon: <BookOpen size={14} /> },
+  { id: "settings", label: "설정", icon: <Settings size={14} /> },
 ];
+
+const NAV_ROUTES: Record<string, string> = {
+  home: "/",
+  qna: "/questions",
+  diary: "/diary",
+  settings: "/settings",
+};
 
 export default function RecordPermissionPage({ params }: { params: Promise<{ questionSendId: string }> }) {
   const { questionSendId } = use(params);
@@ -170,7 +178,12 @@ export default function RecordPermissionPage({ params }: { params: Promise<{ que
         </Button>
       </div>
 
-      <BottomNav items={NAV_ITEMS} activeId="qna" style={{ marginTop: "auto" }} />
+      <BottomNav
+        items={NAV_ITEMS}
+        activeId="qna"
+        onChange={(id) => router.push(NAV_ROUTES[id] ?? "/")}
+        style={{ marginTop: "auto" }}
+      />
     </div>
   );
 }
