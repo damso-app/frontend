@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Webcam from "react-webcam";
 import { BottomNav, Button, Card } from "@/components/ui";
 import { requestAnswerUploadUrl, submitAnswer, uploadAnswerVideo } from "@/lib/api/answers";
+import { ApiError } from "@/lib/api/client";
 import { getQuestionDetail } from "@/lib/api/questions";
 import type { ReceivedQuestionDetail, UserRole } from "@/lib/api/questions";
 
@@ -44,6 +45,7 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
   const webcamRef = useRef<Webcam>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordStartRef = useRef<number | null>(null);
 
   const [captureState, setCaptureState] = useState<CaptureState>("idle");
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -51,9 +53,11 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
 
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitFatal, setSubmitFatal] = useState(false);
 
   const [question, setQuestion] = useState<ReceivedQuestionDetail | null>(null);
 
@@ -93,7 +97,18 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
       if (event.data.size > 0) chunksRef.current.push(event.data);
     };
     recorder.onstop = () => {
+      // elapsedSec은 1초 간격 타이머라 즉시 정지 시 0으로 남는다. 실제 녹화 시간은
+      // 시작~정지 타임스탬프로 계산해서, 백엔드가 거절하는(gt=0) 0초 녹화를 미리 걸러낸다.
+      const durationSec = recordStartRef.current != null ? Math.round((Date.now() - recordStartRef.current) / 1000) : 0;
+      if (durationSec <= 0) {
+        setRecordingError("녹화 시간이 너무 짧아요. 1초 이상 녹화해주세요.");
+        setElapsedSec(0);
+        setCaptureState("idle");
+        return;
+      }
+
       const blob = new Blob(chunksRef.current, { type: mimeType ?? "video/webm" });
+      setElapsedSec(durationSec);
       setRecordedBlob(blob);
       setRecordedUrl(URL.createObjectURL(blob));
       setCaptureState("recorded");
@@ -101,7 +116,9 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
 
     recorder.start();
     mediaRecorderRef.current = recorder;
+    recordStartRef.current = Date.now();
     setElapsedSec(0);
+    setRecordingError(null);
     setCaptureState("recording");
   }, []);
 
@@ -122,12 +139,15 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
     setCaptureState("idle");
     setSubmitState("idle");
     setSubmitError(null);
+    setSubmitFatal(false);
+    setRecordingError(null);
   }, [recordedUrl]);
 
   const handleSubmit = useCallback(async () => {
     if (!recordedBlob) return;
 
     setSubmitError(null);
+    setSubmitFatal(false);
     setSubmitState("uploading");
 
     try {
@@ -150,7 +170,18 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
     } catch (err) {
       console.error("answer submit failed", err);
       setSubmitState("error");
-      setSubmitError("답변 전달에 실패했어요. 잠시 후 다시 시도해주세요.");
+
+      if (err instanceof ApiError && err.status === 409) {
+        // 이미 제출된 질문 — 재촬영/재시도로 해결되지 않으므로 재시도를 유도하지 않는다.
+        setSubmitError("이미 이 질문에 답변을 제출했어요.");
+        setSubmitFatal(true);
+      } else if (err instanceof ApiError && err.status === 415) {
+        setSubmitError("지원하지 않는 영상 형식이에요. 다시 촬영해주세요.");
+      } else if (err instanceof ApiError && err.status === 422) {
+        setSubmitError("녹화 정보가 올바르지 않아요. 다시 촬영해주세요.");
+      } else {
+        setSubmitError("답변 전달에 실패했어요. 잠시 후 다시 시도해주세요.");
+      }
     }
   }, [recordedBlob, questionSendId, elapsedSec, router]);
 
@@ -280,6 +311,17 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
         >
           답변을 전달했어요. AI가 정리하는 대로 다이어리에서 확인할 수 있어요.
         </div>
+      ) : submitFatal ? (
+        <div className="flex flex-col items-center gap-3">
+          {submitError && (
+            <p className="text-body-sm text-center" style={{ color: "var(--color-error)" }}>
+              {submitError}
+            </p>
+          )}
+          <Button variant="primary" size="lg" onClick={() => router.push("/questions")}>
+            질문 목록으로
+          </Button>
+        </div>
       ) : (
         <>
           <div className="flex items-center justify-center gap-4">
@@ -337,6 +379,12 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
               답변 전달
             </Button>
           </div>
+
+          {recordingError && (
+            <p className="text-body-sm text-center" style={{ color: "var(--color-error)" }}>
+              {recordingError}
+            </p>
+          )}
 
           {submitError && (
             <p className="text-body-sm text-center" style={{ color: "var(--color-error)" }}>

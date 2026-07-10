@@ -3,7 +3,7 @@
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomNav, Button, Card } from "@/components/ui";
-import { getAnswerClip } from "@/lib/api/answers";
+import { getClipGrid } from "@/lib/api/clips";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 60000;
@@ -21,6 +21,7 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
 
   const [elapsedMs, setElapsedMs] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const startRef = useRef<number | null>(null);
 
@@ -29,25 +30,32 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
   }, []);
 
   useEffect(() => {
-    if (completed || timedOut) return;
+    if (completed || failed || timedOut) return;
     const id = setInterval(() => {
       if (startRef.current != null) setElapsedMs(Date.now() - startRef.current);
     }, 100);
     return () => clearInterval(id);
-  }, [completed, timedOut]);
+  }, [completed, failed, timedOut]);
 
   // TODO: Supabase Realtime(family:{family_id} 채널, answer_status_updated)이 연동되면
-  // 폴링 대신 그쪽 이벤트로 완료를 감지한다. 아직 채널 접속 정보가 없어 임시로 폴링한다.
+  // 폴링 대신 그쪽 이벤트로 완료/실패를 감지한다. 아직 채널 접속 정보가 없어 임시로 폴링한다.
+  // /v1/answers/{id}/clip은 완료 전엔 항상 404라 실패 여부를 구분할 수 없어서,
+  // status를 그대로 내려주는 /v1/clips에서 이 answerId 항목을 찾아 확인한다.
   useEffect(() => {
-    if (completed) return;
+    if (completed || failed) return;
     let cancelled = false;
+    const answerIdNum = Number(answerId);
 
     const poll = async () => {
       try {
-        await getAnswerClip(answerId);
-        if (!cancelled) setCompleted(true);
-      } catch {
-        // 아직 처리 중이거나 클립이 없는 상태 — 계속 폴링
+        const groups = await getClipGrid();
+        if (cancelled) return;
+        const entry = groups.flatMap((g) => g.clips).find((c) => c.answerId === answerIdNum);
+        if (entry?.status === "completed") setCompleted(true);
+        else if (entry?.status === "failed") setFailed(true);
+      } catch (err) {
+        // 네트워크 오류 등 일시적인 문제 — 상태를 단정 짓지 않고 다음 폴링에서 재시도
+        console.error("answer status poll failed", err);
       }
     };
 
@@ -57,13 +65,13 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
       cancelled = true;
       clearInterval(id);
     };
-  }, [answerId, completed]);
+  }, [answerId, completed, failed]);
 
   useEffect(() => {
-    if (completed) return;
+    if (completed || failed) return;
     const id = setTimeout(() => setTimedOut(true), POLL_TIMEOUT_MS);
     return () => clearTimeout(id);
-  }, [completed]);
+  }, [completed, failed]);
 
   const elapsedSec = elapsedMs / 1000;
 
@@ -119,10 +127,10 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
               fontFamily: "var(--font-sans)",
               fontSize: "14px",
               fontWeight: "var(--weight-bold)",
-              color: completed ? "var(--color-sage-400)" : "var(--text-3)",
+              color: completed ? "var(--color-sage-400)" : failed ? "var(--color-error)" : "var(--text-3)",
             }}
           >
-            {completed ? "완료" : "처리 중"}
+            {completed ? "완료" : failed ? "실패" : "처리 중"}
           </p>
         </div>
 
@@ -130,12 +138,12 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
           className="relative mt-4 w-full overflow-hidden"
           style={{ height: "10px", background: "var(--color-cream-200)", borderRadius: "var(--radius-full)" }}
         >
-          {completed ? (
+          {completed || failed ? (
             <div
               className="absolute left-0 top-0 h-full"
               style={{
                 width: "100%",
-                background: "var(--color-sage-400)",
+                background: completed ? "var(--color-sage-400)" : "var(--color-error)",
                 borderRadius: "var(--radius-full)",
                 transition: "width 200ms linear",
               }}
@@ -171,7 +179,13 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
           </p>
         )}
 
-        {timedOut && !completed && (
+        {failed && (
+          <p className="text-body-sm text-center" style={{ marginTop: "24px", color: "var(--color-error)" }}>
+            AI가 답변 영상을 처리하지 못했어요. 다시 촬영해서 제출해주세요.
+          </p>
+        )}
+
+        {timedOut && !completed && !failed && (
           <p className="text-body-sm text-center" style={{ marginTop: "24px", color: "var(--color-error)" }}>
             생각보다 오래 걸리고 있어요. 잠시 후 다이어리에서 다시 확인해주세요.
           </p>
