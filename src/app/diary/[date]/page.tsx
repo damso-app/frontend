@@ -177,57 +177,66 @@ export default function FourCutGroupPage({ params }: { params: Promise<{ date: s
                     onClick={() => isCompleted && router.push(`/diary/${date}/${clip.answerId}`)}
                     className="relative overflow-hidden text-left"
                     style={{
-                      height: "124px",
+                      aspectRatio: "1 / 1",
                       borderRadius: "var(--radius-lg)",
-                      background: "var(--text-1)",
+                      background: detail?.thumbnailUrl
+                        ? undefined
+                        : isFailed
+                          ? "var(--color-error-bg)"
+                          : "var(--color-sage-100)",
+                      backgroundImage: detail?.thumbnailUrl ? `url(${detail.thumbnailUrl})` : undefined,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
                       border: "none",
                       padding: 0,
                       cursor: isCompleted ? "pointer" : "not-allowed",
                       opacity: isCompleted ? 1 : 0.6,
                     }}
                   >
-                    <div
-                      className="absolute"
-                      style={{
-                        left: "12px",
-                        right: "12px",
-                        top: "12px",
-                        height: "64px",
-                        borderRadius: "var(--radius-md)",
-                        background: detail?.thumbnailUrl
-                          ? undefined
-                          : isFailed
-                            ? "var(--color-error-bg)"
-                            : "var(--color-sage-100)",
-                        backgroundImage: detail?.thumbnailUrl ? `url(${detail.thumbnailUrl})` : undefined,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }}
-                    />
+                    {detail?.thumbnailUrl && (
+                      <div
+                        className="absolute inset-0"
+                        style={{ background: "linear-gradient(to top, rgba(20,18,14,0.65), rgba(20,18,14,0) 55%)" }}
+                      />
+                    )}
                     {isCompleted && (
                       <div
                         className="absolute flex items-center justify-center"
                         style={{
                           left: "50%",
-                          top: "44px",
-                          transform: "translateX(-50%)",
-                          width: "28px",
-                          height: "28px",
+                          top: "50%",
+                          transform: "translate(-50%, -50%)",
+                          width: "34px",
+                          height: "34px",
                           borderRadius: "var(--radius-full)",
                           background: "var(--primary)",
                           color: "#fff",
-                          fontSize: "13px",
+                          fontSize: "14px",
                         }}
                       >
                         ▶
                       </div>
                     )}
                     <div className="absolute text-center" style={{ left: 0, right: 0, bottom: "10px" }}>
-                      <p style={{ fontFamily: "var(--font-sans)", fontSize: "13px", fontWeight: "var(--weight-medium)", color: "#fff" }}>
+                      <p
+                        style={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: "13px",
+                          fontWeight: "var(--weight-medium)",
+                          color: detail?.thumbnailUrl ? "#fff" : isFailed ? "var(--color-error)" : "var(--color-sage-600)",
+                        }}
+                      >
                         {isCompleted ? detail?.title ?? "답변" : isFailed ? "처리 실패" : "처리 중"}
                       </p>
                       {isCompleted && typeof detail?.videoDurationSeconds === "number" && (
-                        <p style={{ fontFamily: "var(--font-sans)", fontSize: "14px", fontWeight: "var(--weight-regular)", color: "#fff" }}>
+                        <p
+                          style={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: "14px",
+                            fontWeight: "var(--weight-regular)",
+                            color: detail?.thumbnailUrl ? "#fff" : "var(--text-3)",
+                          }}
+                        >
                           {formatClipDuration(detail.videoDurationSeconds)}
                         </p>
                       )}

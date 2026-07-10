@@ -16,7 +16,7 @@
 | 5 | 질문 상세 / 읽음 처리 | `/questions/[questionSendId]` | `GET /api/v1/answers/questions/{id}`, `PATCH .../read` | **구현됨** (`src/app/questions/[questionSendId]/page.tsx`). 받은 질문 선택 시 진입 |
 | 6 | 자녀가 질문 보내기 | `/questions/new` | Question 발송 API | **구현됨** (`src/app/questions/new/page.tsx`). 홈 화면 "질문 만들기"에서 진입하는 작성 플로우 |
 | 7 | 영상 답변 기록 | `/questions/[questionSendId]/record` | `POST /api/v1/answers/upload-url` → GCS PUT → `POST /api/v1/answers` | **구현됨** (`src/app/questions/[questionSendId]/record`). API 클라이언트는 `src/lib/api/answers.ts` |
-| 8 | AI 처리 상태 (submit 시 바로 processing→completed/failed) | `/answers/[answerId]/processing` | `GET /api/v1/answers/{answer_id}/clip` (임시 폴링), 추후 Supabase Realtime `family:{family_id}` 채널 `answer_status_updated`로 교체 예정 | **구현됨** (`src/app/answers/[answerId]/processing`). F-07 제출 성공 시 이 라우트로 이동 |
+| 8 | AI 처리 상태 (submit 시 바로 processing→completed/failed) | `/answers/[answerId]/processing` | `GET /api/v1/answers/{answer_id}/progress`(진행률/단계 폴링) → 완료 시 `GET /api/v1/clips`로 date 조회, 추후 Supabase Realtime `family:{family_id}` 채널 `answer_status_updated`로 교체 예정 | **구현됨** (`src/app/answers/[answerId]/processing`). F-07 제출 성공 시 이 라우트로 이동 |
 | 9 | 네컷 그리드 (날짜별 그룹) | `/diary` | `GET /api/v1/clips` → `{ groups: [{ date, clips: [{answerId,status,thumbnailUrl}] }] }` | **구현됨** (`src/app/diary`). API 클라이언트는 `src/lib/api/clips.ts` |
 | 10 | 네컷 묶음 보기 (F-10 회고록 · 저장된 GIF 네컷) | `/diary/[date]` | `GET /api/v1/clips`로 그룹 조회 후 날짜로 필터, 각 완료 컷은 `GET /api/v1/answers/{id}/clip`으로 제목/썸네일 보강 | **구현됨** (`src/app/diary/[date]`) |
 | 10 | 컷 상세 (F-11 영상/AI 요약/명대사, 자동 반복 재생) | `/diary/[date]/[answerId]` | `GET /api/v1/answers/{answer_id}/clip` | **구현됨** (`src/app/diary/[date]/[answerId]`). 같은 날짜 그룹 내 이전/다음 질문 이동 포함 |
@@ -69,3 +69,4 @@
 - AI 콜백(`POST /answers/{id}/ai-callback`)까지는 검증 못함 — 실제 AI 서버 연동 없이는 `submitted`(백엔드 기준 제출 즉시 상태는 `processing`)에서 더 진행되지 않음
 - F-10(Figma node-id 68:42)은 답변자 role 칩("엄마 답변" 등)을 보여주는데, `GET /api/v1/clips`(`ClipGridGroup`/`ClipGridItem`)엔 답변자 role 필드가 없어 프론트에서 못 만듦(2026-07-10 기준 미해결). 날짜 칩은 우선 연월(`2026.07`) 포맷으로 맞춰둠. 미니컷별 영상 길이는 `GET /api/v1/answers/{id}/clip`(`AnswerClip.videoDurationSeconds`)에 2026-07-10부로 추가돼 내려오는 것 확인, F-10에 반영함
 - F-13(`/settings`)의 "저장 기본값"/"알림" 카드, "권한 관리" 버튼 목적지 API 없음. F-17(`/settings/data`)의 "내보내기"/"삭제 요청" 버튼도 대응 API 없어 지금은 안내 문구만 표시하는 스텁 상태 — 백엔드 스펙 나오면 실제 연동 필요
+- F-08 처리 화면: `GET /api/v1/answers/{answer_id}/progress`(`AnswerProgressResponse`: `status`/`progress`/`currentStepLabel`/`estimatedRemainingSeconds`/`aiJobStatus`)가 실제 배포돼 있는 것 확인(2026-07-10), 기존 `/v1/clips` 우회 폴링을 이걸로 교체. `status=processing`인데 `aiJobStatus=completed`면 AI 작업은 끝났고 콜백(DB 반영)만 기다리는 중이라 "마무리 중"으로 구분 표시. `progress`가 없을 때는 예상 총 소요시간(30초) 기준 경과시간 비율로 진행바를 대략 채움(최대 95%, 실제 완료 시에만 100%)

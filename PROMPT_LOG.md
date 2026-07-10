@@ -6,9 +6,27 @@
 
 ## 2026-07-10
 
+- **프롬프트 요약**: F-10 네컷 그리드 썸네일이 잘려서 얼굴이 안 보이는 문제 수정 — 정사각형으로 확대, 여백 최소화
+- **작업 구현 요약**: 미니컷 카드가 `height: 124px` 고정 박스 안에 썸네일을 `12px` 마진을 두고 `64px` 높이로만 작게 배치하던 구조였음(가로로 넓고 세로로 아주 짧은 비율이라 `cover` 크롭이 심하게 상하를 잘라 얼굴이 잘림). 카드를 `aspectRatio: 1/1` 정사각형으로 바꾸고 썸네일이 카드 전체(`inset-0`, 마진 없음)를 채우도록 변경. 텍스트 가독성을 위해 썸네일 위에 하단 그라디언트 스크림 추가, 이미지 없는 처리중/실패 상태는 배경이 밝은 톤(sage-100/error-bg)이라 텍스트 색을 흰색 대신 `sage-600`/`error`로 조정
+- **변경점**: `src/app/diary/[date]/page.tsx` 수정
+
+## 2026-07-10
+
 - **프롬프트 요약**: `/questions/new` 상단 받는 사람/질문 테마 선택 버튼을 더 작은 pill 형태로 조정
 - **작업 구현 요약**: 전체 레이아웃과 추천 질문 영역은 유지하고, 받는 사람/질문 테마에 공통 적용되는 선택 버튼 스타일만 34px 높이·작은 좌우 패딩·13px 텍스트·full pill radius로 축소. 두 섹션의 제목-버튼 그룹 간격도 compact하게 조정
 - **변경점**: `src/app/questions/new/page.tsx`, `PROMPT_LOG.md` 수정
+
+## 2026-07-10
+
+- **프롬프트 요약**: AI 처리 화면(F-08) 진행률 바를 실제 폴링 기반으로 재구현. status=processing인데 AI 작업 자체는 끝나서 콜백만 기다리는 상태를 구분해서 보여주기
+- **작업 구현 요약**: 실제 배포된 `GET /api/v1/answers/{answer_id}/progress`(`status`/`progress`/`currentStepLabel`/`aiJobStatus`) 확인 후 `src/lib/api/answers.ts`에 `getAnswerProgress` 추가. 기존 `/v1/clips` 우회 폴링을 이걸로 교체하고, 완료 시에만 date 조회용으로 `/v1/clips` 한 번 더 호출. 진행바를 인디터미닛 애니메이션에서 실제 `progress`(0~100) 기반 폭으로 변경, API가 progress를 안 줄 때는 경과시간/30초 비율로 대체(최대 95%). `status=processing && aiJobStatus=completed`(AI 작업은 끝났지만 콜백 대기 중)일 때 카드 상태를 "마무리 중"으로, 문구를 "AI가 완성해서 준비하고 있어요."로 구분 표시. 전체 소요시간 안내는 "30초 정도 소요됩니다."로 유지
+- **변경점**: `src/lib/api/answers.ts`, `src/app/answers/[answerId]/processing/page.tsx`, `docs/route-map.md` 수정
+
+## 2026-07-10
+
+- **프롬프트 요약**: AI 처리 화면에 예상 소요시간(30초) 안내 문구 추가
+- **작업 구현 요약**: F-08 처리 화면 설명 문구를 "AI가 답변을 정리하는 동안 잠시만 기다려주세요."에서 "... 30초 정도 소요됩니다."로 수정
+- **변경점**: `src/app/answers/[answerId]/processing/page.tsx` 수정
 
 ## 2026-07-10
 

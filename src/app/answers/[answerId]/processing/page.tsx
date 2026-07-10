@@ -3,11 +3,13 @@
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomNav, Button, Card } from "@/components/ui";
+import { getAnswerProgress } from "@/lib/api/answers";
 import { getClipGrid } from "@/lib/api/clips";
 import { BookOpen, Home, MessageCircleQuestion, Settings } from "lucide-react";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 60000;
+const ESTIMATED_TOTAL_SECONDS = 30;
 
 const NAV_ITEMS = [
   { id: "home", label: "홈", icon: <Home size={14} /> },
@@ -22,6 +24,9 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
   const router = useRouter();
 
   const [elapsedMs, setElapsedMs] = useState(0);
+  const [apiProgress, setApiProgress] = useState<number | null>(null);
+  const [stepLabel, setStepLabel] = useState<string | null>(null);
+  const [finishing, setFinishing] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [completedDate, setCompletedDate] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -42,8 +47,8 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
 
   // TODO: Supabase Realtime(family:{family_id} 채널, answer_status_updated)이 연동되면
   // 폴링 대신 그쪽 이벤트로 완료/실패를 감지한다. 아직 채널 접속 정보가 없어 임시로 폴링한다.
-  // /v1/answers/{id}/clip은 완료 전엔 항상 404라 실패 여부를 구분할 수 없어서,
-  // status를 그대로 내려주는 /v1/clips에서 이 answerId 항목을 찾아 확인한다.
+  // status가 processing인데 aiJobStatus가 completed면 AI 작업 자체는 끝났고 콜백(DB 반영)만
+  // 기다리는 중이라는 뜻이라, 이 조합일 때는 "마무리 중" 문구로 구분해서 보여준다.
   useEffect(() => {
     if (completed || failed) return;
     let cancelled = false;
@@ -51,17 +56,32 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
 
     const poll = async () => {
       try {
-        const groups = await getClipGrid();
+        const progress = await getAnswerProgress(answerId);
         if (cancelled) return;
-        const group = groups.find((g) => g.clips.some((c) => c.answerId === answerIdNum));
-        const entry = group?.clips.find((c) => c.answerId === answerIdNum);
-        if (entry?.status === "completed") {
+
+        if (progress.status === "failed") {
+          setFailed(true);
+          return;
+        }
+
+        if (progress.status === "completed") {
+          setApiProgress(100);
+          const groups = await getClipGrid();
+          if (cancelled) return;
+          const group = groups.find((g) => g.clips.some((c) => c.answerId === answerIdNum));
           setCompleted(true);
           if (group) setCompletedDate(group.date);
-        } else if (entry?.status === "failed") setFailed(true);
+          return;
+        }
+
+        setFinishing(progress.aiJobStatus === "completed");
+        setStepLabel(progress.currentStepLabel);
+        if (typeof progress.progress === "number") {
+          setApiProgress(Math.max(0, Math.min(100, progress.progress)));
+        }
       } catch (err) {
         // 네트워크 오류 등 일시적인 문제 — 상태를 단정 짓지 않고 다음 폴링에서 재시도
-        console.error("answer status poll failed", err);
+        console.error("answer progress poll failed", err);
       }
     };
 
@@ -80,6 +100,11 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
   }, [completed, failed]);
 
   const elapsedSec = elapsedMs / 1000;
+  const fallbackProgress = Math.min(95, (elapsedSec / ESTIMATED_TOTAL_SECONDS) * 100);
+  const displayProgress = completed ? 100 : apiProgress ?? fallbackProgress;
+  const statusLabel = completed ? "완료" : failed ? "실패" : finishing ? "마무리 중" : "처리 중";
+  const statusColor = completed || finishing ? "var(--color-sage-400)" : failed ? "var(--color-error)" : "var(--text-3)";
+  const stepMessage = finishing ? "AI가 완성해서 준비하고 있어요." : stepLabel;
 
   return (
     <div
@@ -112,7 +137,7 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
           정리하고 있어요
         </h1>
         <p className="text-body-sm" style={{ marginTop: "8px" }}>
-          AI가 답변을 정리하는 동안 잠시만 기다려주세요.
+          AI가 답변을 정리하는 동안 잠시만 기다려주세요. 30초 정도 소요됩니다.
         </p>
       </div>
 
@@ -133,10 +158,10 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
               fontFamily: "var(--font-sans)",
               fontSize: "14px",
               fontWeight: "var(--weight-bold)",
-              color: completed ? "var(--color-sage-400)" : failed ? "var(--color-error)" : "var(--text-3)",
+              color: statusColor,
             }}
           >
-            {completed ? "완료" : failed ? "실패" : "처리 중"}
+            {statusLabel}
           </p>
         </div>
 
@@ -144,29 +169,19 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
           className="relative mt-4 w-full overflow-hidden"
           style={{ height: "10px", background: "var(--color-cream-200)", borderRadius: "var(--radius-full)" }}
         >
-          {completed || failed ? (
-            <div
-              className="absolute left-0 top-0 h-full"
-              style={{
-                width: "100%",
-                background: completed ? "var(--color-sage-400)" : "var(--color-error)",
-                borderRadius: "var(--radius-full)",
-                transition: "width 200ms linear",
-              }}
-            />
-          ) : (
-            <div
-              className="absolute top-0 h-full"
-              style={{
-                background: "var(--color-sage-400)",
-                borderRadius: "var(--radius-full)",
-                animation: "memoir-progress-indeterminate 1.4s ease-in-out infinite",
-              }}
-            />
-          )}
+          <div
+            className="absolute left-0 top-0 h-full"
+            style={{
+              width: `${displayProgress}%`,
+              background: failed ? "var(--color-error)" : "var(--color-sage-400)",
+              borderRadius: "var(--radius-full)",
+              transition: "width 400ms ease",
+            }}
+          />
         </div>
 
-        <div className="mt-2">
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="text-caption">{stepMessage}</span>
           <span className="text-caption">{elapsedSec.toFixed(1)}초 경과</span>
         </div>
 

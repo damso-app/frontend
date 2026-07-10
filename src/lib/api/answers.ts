@@ -99,6 +99,11 @@ function normalizeDepth(input: string): QuestionDepth {
   return "tiny";
 }
 
+function normalizeAnswerStatus(input: string): AnswerStatus {
+  if (input === "submitted" || input === "processing" || input === "completed" || input === "failed") return input;
+  return "processing";
+}
+
 function normalizeQuestionStatus(input: string): QuestionStatus {
   if (input === "sent" || input === "answered" || input === "cancelled" || input === "expired") return input;
   return "sent";
@@ -241,6 +246,38 @@ function normalizeAnswerClip(input: unknown): AnswerClip {
 export async function getAnswerClip(answerId: string) {
   const response = await apiFetch<unknown>(`/v1/answers/${answerId}/clip`);
   return normalizeAnswerClip(response);
+}
+
+export interface AnswerProgress {
+  answerId: number;
+  status: AnswerStatus;
+  progress: number | null;
+  currentStepLabel: string | null;
+  estimatedRemainingSeconds: number | null;
+  aiJobStatus: string | null;
+}
+
+function normalizeAnswerProgress(input: unknown): AnswerProgress {
+  const source = asRecord(input);
+
+  return {
+    answerId: getNumber(source, "answerId"),
+    status: normalizeAnswerStatus(getString(source, "status")),
+    progress: getNullableNumber(source, "progress"),
+    currentStepLabel: getNullableString(source, "currentStepLabel"),
+    estimatedRemainingSeconds: getNullableNumber(source, "estimatedRemainingSeconds"),
+    aiJobStatus: getNullableString(source, "aiJobStatus"),
+  };
+}
+
+/**
+ * GET /api/v1/answers/{answer_id}/progress — AI 처리 진행률(0~100)과 현재 단계, AI 작업
+ * 자체의 완료 여부(aiJobStatus)를 알려준다. status가 processing인데 aiJobStatus가
+ * completed면 AI 작업 자체는 끝났고 콜백(DB 반영)만 기다리는 중이라는 뜻.
+ */
+export async function getAnswerProgress(answerId: string) {
+  const response = await apiFetch<unknown>(`/v1/answers/${answerId}/progress`);
+  return normalizeAnswerProgress(response);
 }
 
 export async function getReceivedQuestions(options: GetReceivedQuestionsOptions = {}) {
