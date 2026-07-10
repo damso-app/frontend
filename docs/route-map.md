@@ -66,3 +66,4 @@
 - `video_clips`의 `fourcut_title`이 같은 날짜 그룹 내 여러 컷에 공통으로 채워지는 것을 실제 시딩 데이터로 확인함 (`src/app/diary/[date]/page.tsx`의 `groupTitle` 로직 정상 동작)
 - F-11에서 원본 질문 텍스트를 보여줄 수 있는 API가 없음 — 필요하면 백엔드에 `question_sends.question_text`를 clip 상세 응답에 조인해달라고 요청해야 함
 - AI 콜백(`POST /answers/{id}/ai-callback`)까지는 검증 못함 — 실제 AI 서버 연동 없이는 `submitted`(백엔드 기준 제출 즉시 상태는 `processing`)에서 더 진행되지 않음
+- F-10(Figma node-id 68:42)은 답변자 role 칩("엄마 답변" 등)을 보여주는데, `GET /api/v1/clips`(`ClipGridGroup`/`ClipGridItem`)엔 답변자 role 필드가 없어 프론트에서 못 만듦(2026-07-10 기준 미해결). 날짜 칩은 우선 연월(`2026.07`) 포맷으로 맞춰둠. 미니컷별 영상 길이는 `GET /api/v1/answers/{id}/clip`(`AnswerClip.videoDurationSeconds`)에 2026-07-10부로 추가돼 내려오는 것 확인, F-10에 반영함

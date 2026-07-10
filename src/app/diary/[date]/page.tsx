@@ -23,9 +23,19 @@ const NAV_ROUTES: Record<string, string> = {
   settings: "/settings",
 };
 
-function formatDateLabel(dateStr: string) {
-  const [year, month, day] = dateStr.split("-");
-  return `${year}.${month}.${day}`;
+function formatMonthLabel(dateStr: string) {
+  const [year, month] = dateStr.split("-");
+  return `${year}.${month}`;
+}
+
+function formatClipDuration(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = Math.floor(totalSeconds % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${minutes}:${seconds}`;
 }
 
 export default function FourCutGroupPage({ params }: { params: Promise<{ date: string }> }) {
@@ -139,7 +149,7 @@ export default function FourCutGroupPage({ params }: { params: Promise<{ date: s
         <>
           <div className="flex gap-2">
             <Badge variant="default" size="lg">답변 {group.clips.length}개</Badge>
-            <Badge variant="outline" size="lg">{formatDateLabel(group.date)}</Badge>
+            <Badge variant="outline" size="lg">{formatMonthLabel(group.date)}</Badge>
           </div>
 
           <Card variant="feature" elevation="card">
@@ -216,6 +226,11 @@ export default function FourCutGroupPage({ params }: { params: Promise<{ date: s
                       <p style={{ fontFamily: "var(--font-sans)", fontSize: "13px", fontWeight: "var(--weight-medium)", color: "#fff" }}>
                         {isCompleted ? detail?.title ?? "답변" : isFailed ? "처리 실패" : "처리 중"}
                       </p>
+                      {isCompleted && typeof detail?.videoDurationSeconds === "number" && (
+                        <p style={{ fontFamily: "var(--font-sans)", fontSize: "14px", fontWeight: "var(--weight-regular)", color: "#fff" }}>
+                          {formatClipDuration(detail.videoDurationSeconds)}
+                        </p>
+                      )}
                     </div>
                   </button>
                 );

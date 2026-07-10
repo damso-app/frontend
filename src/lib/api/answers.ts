@@ -194,6 +194,7 @@ export interface AnswerClip {
   answerId: number;
   questionText: string;
   videoUrl: string | null;
+  videoDurationSeconds: number | null;
   thumbnailUrl: string | null;
   transcript: string | null;
   transcriptSegments: unknown[] | null;
