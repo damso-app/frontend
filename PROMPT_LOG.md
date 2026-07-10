@@ -6,6 +6,26 @@
 
 ## 2026-07-10
 
+- **프롬프트 요약**: 라이브 백엔드에 `videoDurationSeconds` 응답 필드가 실제로 추가됐는지 재확인 후 F-10에 반영
+- **작업 구현 요약**: 배포된 백엔드 `/openapi.json`을 재조회해 `ClipDetailResponse`에 `videoDurationSeconds`가 추가된 것 확인(직전 확인 시점엔 없었음 — 배포 반영 타이밍 차이였음). `AnswerClip` 타입에 `videoDurationSeconds: number | null` 추가하고, F-10 미니컷 카드에 제목 아래 "MM:SS" 형식으로 영상 길이 표시
+- **변경점**: `src/lib/api/answers.ts`, `src/app/diary/[date]/page.tsx`, `docs/route-map.md` 수정
+
+## 2026-07-10
+
+- **프롬프트 요약**: `video_duration_seconds` 응답 노출 여부 확인 + `/questions` 목록 빈 상태에 "가족에게 질문 만들기" CTA 추가
+- **작업 구현 요약**: `video_duration_seconds`는 `POST /api/v1/answers` 제출 시 입력으로만 쓰이고 `GET /api/v1/clips`/`GET /api/v1/answers/{id}/clip` 어디에도 응답 필드로 없음을 확인 — 필요한 스펙(`GET .../clip`에 `videoDurationSeconds` 추가)을 `docs/route-map.md`에 이미 기록해둔 항목과 함께 정리. `/questions` 받은 질문 목록의 빈 상태 카드("아직 받은 질문이 없어요")에 `/questions/new`로 이동하는 "가족에게 질문 만들기" 버튼 추가
+- **변경점**: `src/app/questions/page.tsx` 수정
+
+---
+
+## 2026-07-10
+
+- **프롬프트 요약**: F-10(Figma node-id 68:42) 화면과 실제 구현 차이 확인 후 수정
+- **작업 구현 요약**: Figma 대비 차이 2건 확인 — (1) 상단 칩이 Figma는 "답변자 role"+"연월", 코드는 "답변 N개"+"전체 날짜"였음. role 칩은 `GET /api/v1/clips`/`GET /api/v1/answers/{id}/clip` 어디에도 답변자 role 필드가 없어 프론트만으로 불가 → 날짜 칩만 연월(`2026.07`) 포맷으로 수정하고 role 칩은 보류. (2) 미니컷 카드에 Figma는 제목 아래 영상 길이("00:42")도 표시하는데 `AnswerClip`에 duration 필드가 없어 표시 불가 — 보류. 두 누락 필드는 `docs/route-map.md`에 백엔드 요청 필요 항목으로 기록
+- **변경점**: `src/app/diary/[date]/page.tsx`(날짜 칩 포맷 변경), `docs/route-map.md` 수정
+
+## 2026-07-10
+
 - **프롬프트 요약**: BottomNav에 작은 아이콘 추가 (이모지 대신 flaticon류 일반 SVG 스타일)
 - **작업 구현 요약**: `BottomNav`가 이미 지원하던 `icon?: ReactNode` prop을 채워넣음. 새 아이콘 컴포넌트를 만들지 않고 이미 의존성에 있던 `lucide-react`(Button.tsx 주석의 "e.g. Lucide icon" 컨벤션과 일치)를 사용: 홈=`Home`, 질문&답변=`MessageCircleQuestion`, 다이어리=`BookOpen`, 설정=`Settings`, 전부 `size={14}`. 7개 화면의 중복된 `NAV_ITEMS` 배열 각각에 동일하게 적용
 - **변경점**: `src/app/diary/page.tsx`, `src/app/diary/[date]/page.tsx`, `src/app/diary/[date]/[answerId]/page.tsx`, `src/app/answers/[answerId]/processing/page.tsx`, `src/app/questions/[questionSendId]/page.tsx`, `src/app/questions/[questionSendId]/record/page.tsx`, `src/app/questions/[questionSendId]/record/permission/page.tsx` 수정
