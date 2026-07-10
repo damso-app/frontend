@@ -1,10 +1,5 @@
 import { ApiError, apiFetch } from "./client";
-import {
-  getMockFamilyInvitation,
-  getMockFamilyInvitationValidation,
-  getMockJoinFamilyResponse,
-  setMockFamilyConnected,
-} from "./family-mock";
+import { getMockFamilyInvitation, getMockFamilyInvitationValidation, setMockFamilyConnected } from "./family-mock";
 import type { UserRole } from "./users";
 
 export interface FamilyInvitation {
@@ -128,21 +123,14 @@ function normalizeJoinFamilyResponse(input: unknown): JoinFamilyResponse {
 }
 
 export async function createFamily() {
-  try {
-    const response = await apiFetch<unknown>("/v1/families", {
-      method: "POST",
-      body: JSON.stringify({}),
-    });
+  const response = await apiFetch<unknown>("/v1/families", {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
 
-    if (!response) return getMockFamilyInvitation();
+  if (!response) return getMockFamilyInvitation();
 
-    return normalizeInvitationResponse(response);
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 401) throw error;
-
-    console.warn("[Families] Falling back to mock family creation", error);
-    return getMockFamilyInvitation();
-  }
+  return normalizeInvitationResponse(response);
 }
 
 export async function getMyFamilyInvitation() {
@@ -176,20 +164,12 @@ export async function getFamilyInvitation(inviteCode: string) {
 export async function joinFamily(input: JoinFamilyRequest) {
   const inviteCode = normalizeInviteCodeForApi(input.inviteCode);
 
-  try {
-    const response = await apiFetch<unknown>("/v1/families/join", {
-      method: "POST",
-      body: JSON.stringify({ inviteCode }),
-    });
-    const normalizedResponse = normalizeJoinFamilyResponse(response);
+  const response = await apiFetch<unknown>("/v1/families/join", {
+    method: "POST",
+    body: JSON.stringify({ inviteCode }),
+  });
+  const normalizedResponse = normalizeJoinFamilyResponse(response);
 
-    setMockFamilyConnected(inviteCode);
-    return normalizedResponse;
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 401) throw error;
-
-    console.warn("[Families] Falling back to mock family join", error);
-    setMockFamilyConnected(inviteCode);
-    return getMockJoinFamilyResponse();
-  }
+  setMockFamilyConnected(inviteCode);
+  return normalizedResponse;
 }

@@ -6,6 +6,12 @@
 
 ## 2026-07-10
 
+- **프롬프트 요약**: 백엔드 버그 리포트 반영 — 카카오 로그인 후 두 사용자가 각자 별도 가족을 자동 생성해 서로 연결이 영원히 실패(`POST /families/join` 409)하는 문제 수정
+- **작업 구현 요약**: 원인 2가지 확인 후 수정. (1) `FamilyInviteScreen`(`/onboarding/family-connect`)이 `GET /families/me/invitation` 404(정상적인 "가족 없음" 상태)를 받으면 곧바로 `POST /families`를 자동 호출해 가족을 만들어버리던 로직 제거 — 대신 `"no-family"` 상태로 전환해 "가족 만들기"/"코드로 참여하기" 중 사용자가 명시적으로 선택하게 변경, 동시에 두 사람이 "가족 만들기"를 누르면 안 된다는 안내 문구 추가. (2) `src/lib/api/families.ts`의 `createFamily`/`joinFamily`가 401 외 모든 에러(409 포함)를 목(mock) 성공 응답으로 바꿔치기하던 try/catch 제거 — 이 때문에 `FamilyCodeScreen`에 이미 있던 409("이미 가족에 연결되어 있습니다") 안내 문구가 실제로는 화면에 뜨지 못하던 문제도 같이 해결됨
+- **변경점**: `src/components/onboarding/FamilyInviteScreen.tsx`, `src/lib/api/families.ts` 수정
+
+## 2026-07-10
+
 - **프롬프트 요약**: 카카오톡 가족 초대 링크 수신자가 로그인·약관·역할 선택을 거쳐 자동으로 가족 연결 후 홈으로 이동하는 온보딩 플로우 구현
 - **작업 구현 요약**: 초대 공유 URL을 `/onboarding/family-code/{inviteCode}` 형태로 생성하고 초대자 역할 힌트(`inviterRole`, 필요 시 `recommendedRole`)를 query로 포함. 링크 수신 시 초대 코드를 localStorage에 보관해 로그인/약관 이동 중에도 유지하고, 카카오 콜백과 약관 완료 후 `GET /users/me/onboarding` 기준으로 다음 온보딩 단계 분기. 역할 화면은 pending invite가 있으면 추천 역할을 기본 선택하고, 역할 저장 후 `POST /families/join`을 자동 호출해 홈으로 이동. 기존 동적 초대 라우트(`/family/invite/[inviteCode]`, `/family/join/[inviteCode]`, `/onboarding/family-code/[inviteCode]`)도 같은 자동 연결 플로우로 통일. 초대 코드 API 정규화와 역할 힌트 응답 필드 파싱을 추가하고, 빌드를 막던 질문 상세 JSX 닫힘/아이콘 import 오류도 함께 복구
 - **변경점**: `src/components/onboarding/FamilyInviteScreen.tsx`, `src/components/onboarding/FamilyCodeScreen.tsx`, `src/app/auth/kakao/callback/CallbackClient.tsx`, `src/app/agreements/page.tsx`, `src/app/onboarding/role/page.tsx`, `src/app/onboarding/family-code/[inviteCode]/page.tsx`, `src/app/family/invite/[inviteCode]/page.tsx`, `src/app/family/join/[inviteCode]/page.tsx`, `src/lib/api/families.ts`, `src/lib/auth/pending-invite.ts`, `src/lib/onboarding/next-route.ts`, `src/lib/api/auth.ts`, `src/app/questions/[questionSendId]/page.tsx`, `docs/route-map.md`, `PROMPT_LOG.md` 수정

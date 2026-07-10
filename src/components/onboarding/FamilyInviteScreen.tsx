@@ -72,16 +72,21 @@ function getShareableInviteUrl(invitation: FamilyInvitation | null, inviterRole:
   return inviteUrl.toString();
 }
 
+type FamilyStatus = "checking" | "no-family" | "ready";
+
 export function FamilyInviteScreen() {
   const router = useRouter();
   const didFetchRef = useRef(false);
   const [invitation, setInvitation] = useState<FamilyInvitation | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [status, setStatus] = useState<FamilyStatus>("checking");
+  const [isCreating, setIsCreating] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [noticeMessage, setNoticeMessage] = useState("");
   const [fallbackInviteCode, setFallbackInviteCode] = useState("");
   const [currentRole, setCurrentRole] = useState<UserRole | null>(null);
+
+  const isLoading = status === "checking";
 
   const displayInviteCode = invitation?.inviteCode ?? fallbackInviteCode;
   const shareableInviteUrl = useMemo(() => getShareableInviteUrl(invitation, currentRole), [currentRole, invitation]);
@@ -108,7 +113,7 @@ export function FamilyInviteScreen() {
       return;
     }
 
-    setIsLoading(true);
+    setStatus("checking");
     setErrorMessage("");
     setNoticeMessage("");
 
@@ -116,17 +121,39 @@ export function FamilyInviteScreen() {
       const onboardingStatus = await getMyOnboardingStatus();
       setCurrentRole(onboardingStatus.role);
 
-      try {
-        const existingInvitation = await getMyFamilyInvitation();
-        setInvitation(existingInvitation);
-      } catch (error) {
-        if (!(error instanceof ApiError) || error.status !== 404) {
-          throw error;
-        }
-
-        const createdInvitation = await createFamily();
-        setInvitation(createdInvitation ?? (await getMyFamilyInvitation()));
+      const existingInvitation = await getMyFamilyInvitation();
+      setInvitation(existingInvitation);
+      setStatus("ready");
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        clearAccessToken();
+        router.replace("/login");
+        return;
       }
+
+      // 404는 정상 상태(아직 가족이 없음) — 여기서 자동으로 가족을 만들면 안 된다.
+      // 두 사용자가 각자 로그인하자마자 자동으로 별도 가족을 갖게 되면, 서로의 진짜
+      // 초대 코드로 합류(POST /families/join)해도 "이미 가족에 속해 있음"(409)으로
+      // 영원히 실패한다. 반드시 "가족 만들기"/"코드로 참여하기" 중 사용자가 선택하게 한다.
+      if (!(error instanceof ApiError) || error.status !== 404) {
+        setErrorMessage(getFamilyCreateErrorMessage(error));
+      }
+
+      setStatus("no-family");
+    }
+  }, [router]);
+
+  const handleCreateFamily = useCallback(async () => {
+    if (isCreating) return;
+
+    setIsCreating(true);
+    setErrorMessage("");
+    setNoticeMessage("");
+
+    try {
+      const createdInvitation = await createFamily();
+      setInvitation(createdInvitation);
+      setStatus("ready");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         clearAccessToken();
@@ -136,9 +163,9 @@ export function FamilyInviteScreen() {
 
       setErrorMessage(getFamilyCreateErrorMessage(error));
     } finally {
-      setIsLoading(false);
+      setIsCreating(false);
     }
-  }, [router]);
+  }, [isCreating, router]);
 
   useEffect(() => {
     if (didFetchRef.current) return;
@@ -218,28 +245,46 @@ export function FamilyInviteScreen() {
                 </p>
               )}
               <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "var(--space-sm)" }}>
-                <Button
-                  size="md"
-                  fullWidth
-                  loading={isSharing}
-                  disabled={isLoading || isSharing || !inviteText}
-                  onClick={handleShare}
-                  style={{
-                    minHeight: "50px",
-                    padding: "0 var(--space-xs)",
-                    background: "var(--color-kakao-yellow)",
-                    color: "var(--color-kakao-text)",
-                    fontSize: "14px",
-                    fontWeight: "var(--weight-bold)",
-                  }}
-                >
-                  카카오톡으로 초대
-                </Button>
+                {status === "no-family" ? (
+                  <Button
+                    size="md"
+                    fullWidth
+                    loading={isCreating}
+                    disabled={isCreating}
+                    onClick={handleCreateFamily}
+                    style={{
+                      minHeight: "50px",
+                      padding: "0 var(--space-xs)",
+                      fontSize: "14px",
+                      fontWeight: "var(--weight-bold)",
+                    }}
+                  >
+                    가족 만들기
+                  </Button>
+                ) : (
+                  <Button
+                    size="md"
+                    fullWidth
+                    loading={isSharing}
+                    disabled={isLoading || isSharing || !inviteText}
+                    onClick={handleShare}
+                    style={{
+                      minHeight: "50px",
+                      padding: "0 var(--space-xs)",
+                      background: "var(--color-kakao-yellow)",
+                      color: "var(--color-kakao-text)",
+                      fontSize: "14px",
+                      fontWeight: "var(--weight-bold)",
+                    }}
+                  >
+                    카카오톡으로 초대
+                  </Button>
+                )}
                 <Button
                   size="md"
                   variant="secondary"
                   fullWidth
-                  disabled={isSharing}
+                  disabled={isSharing || isCreating}
                   onClick={() => router.push("/onboarding/family-code")}
                   style={{
                     minHeight: "50px",
@@ -251,22 +296,34 @@ export function FamilyInviteScreen() {
                     fontWeight: "var(--weight-bold)",
                   }}
                 >
-                  코드로 연결하기
+                  코드로 참여하기
                 </Button>
               </div>
               <p className="text-caption" style={{ margin: 0, textAlign: "center", color: "var(--text-2)" }}>
-                카카오톡으로 가족들을 연결할 수 있어요.
+                {status === "no-family"
+                  ? "가족을 처음 만드는 거라면 '가족 만들기', 상대방에게 코드를 받았다면 '코드로 참여하기'를 눌러주세요."
+                  : "카카오톡으로 가족들을 연결할 수 있어요."}
               </p>
             </>
           }
         >
           <FamilyConnectionPanel connectorLabel="카카오톡 연결" parentSrc="/father.png" />
-          <InviteCodeCard inviteCode={displayInviteCode} isLoading={!displayInviteCode} />
-          <InfoBox
-            title="카카오톡 초대 보내기"
-            description="카카오톡에서 링크를 누르면 알아서 초대 코드로 바로 연결됩니다."
-            background="var(--color-cream-100)"
-          />
+          {status === "no-family" ? (
+            <InfoBox
+              title="아직 만든 가족이 없어요"
+              description="가족 대표라면 '가족 만들기'로 연결 코드를 발급받아 공유하고, 상대방에게 코드를 받았다면 '코드로 참여하기'를 눌러주세요. 두 사람이 동시에 '가족 만들기'를 누르면 서로 연결할 수 없으니 한 명만 먼저 만들어주세요."
+              background="var(--color-cream-100)"
+            />
+          ) : (
+            <>
+              <InviteCodeCard inviteCode={displayInviteCode} isLoading={!displayInviteCode} />
+              <InfoBox
+                title="카카오톡 초대 보내기"
+                description="카카오톡에서 링크를 누르면 알아서 초대 코드로 바로 연결됩니다."
+                background="var(--color-cream-100)"
+              />
+            </>
+          )}
         </PhoneCard>
       </div>
     </FamilyOnboardingFrame>
