@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { BottomNav, Button, Card } from "@/components/ui";
@@ -20,19 +21,6 @@ const ROLE_LABEL = {
   child: "자녀",
   mother: "엄마",
   father: "아빠",
-} as const;
-
-const FAMILY_CHIP_COLORS = {
-  connected: {
-    border: "1px solid var(--color-sage-200)",
-    background: "var(--color-sage-50)",
-    color: "var(--color-sage-600)",
-  },
-  pending: {
-    border: "1px solid var(--color-cream-300)",
-    background: "var(--color-cream-100)",
-    color: "var(--color-amber-500)",
-  },
 } as const;
 
 function formatTime(iso: string) {
@@ -56,12 +44,19 @@ function getSentQuestionForFather(summary: HomeSummary) {
 
 function getMemberChips(summary: HomeSummary) {
   const activeRoleSet = new Set(summary.connectedMembers.filter((member) => member.active).map((member) => member.role));
+  const pendingResponseRoleSet = new Set(
+    [summary.latestSentQuestion, ...summary.latestSentQuestions]
+      .filter((question): question is LatestSentQuestionSummary => Boolean(question))
+      .filter((question) => question.status === "sent" && !question.answered)
+      .map((question) => question.recipient.role),
+  );
 
   if (summary.role === "child") {
     return (["mother", "father"] as const).map((role) => {
       const connected = activeRoleSet.has(role);
+      const statusLabel = connected && pendingResponseRoleSet.has(role) ? "답변 대기" : `연결${connected ? "됨" : " 대기"}`;
       return {
-        label: `${ROLE_LABEL[role]} 연결${connected ? "됨" : " 대기"}`,
+        label: `${ROLE_LABEL[role]} ${statusLabel}`,
         connected,
       };
     });
@@ -69,11 +64,14 @@ function getMemberChips(summary: HomeSummary) {
 
   if (summary.role === "mother" || summary.role === "father") {
     const connected = summary.connectedMembers.length > 0 ? activeRoleSet.has("child") : summary.connectedToChild;
-    return [{ label: `자녀 연결${connected ? "됨" : " 대기"}`, connected }];
+    const statusLabel = connected && pendingResponseRoleSet.has("child") ? "답변 대기" : `연결${connected ? "됨" : " 대기"}`;
+    return [{ label: `자녀 ${statusLabel}`, connected }];
   }
 
   const chips = summary.connectedMembers.map((member) => ({
-    label: `${member.roleLabel} 연결${member.active ? "됨" : " 대기"}`,
+    label: `${member.roleLabel} ${
+      member.active && pendingResponseRoleSet.has(member.role) ? "답변 대기" : `연결${member.active ? "됨" : " 대기"}`
+    }`,
     connected: member.active,
   }));
   if (chips.length > 0) return chips;
@@ -82,6 +80,30 @@ function getMemberChips(summary: HomeSummary) {
     { label: summary.connectedToParent ? "부모 연결됨" : "부모 연결 대기", connected: summary.connectedToParent },
     { label: summary.connectedToChild ? "자녀 연결됨" : "자녀 연결 대기", connected: summary.connectedToChild },
   ];
+}
+
+function getFamilyChipStyle(label: string): CSSProperties {
+  if (label.includes("답변 대기")) {
+    return {
+      background: "var(--color-coral-50)",
+      border: "1px solid var(--color-coral-300)",
+      color: "var(--color-coral-500)",
+    };
+  }
+
+  if (label.includes("연결됨")) {
+    return {
+      background: "var(--color-sage-500)",
+      border: "1px solid var(--color-sage-500)",
+      color: "var(--color-cream-50)",
+    };
+  }
+
+  return {
+    background: "var(--surface)",
+    border: "1px solid var(--hairline-soft)",
+    color: "var(--text-2)",
+  };
 }
 
 function SentQuestionCard({ question }: { question: LatestSentQuestionSummary | null }) {
@@ -200,7 +222,17 @@ export default function Home() {
           <br />
           남길 기록
         </h1>
-        <p className="text-body-sm" style={{ marginTop: "10px", maxWidth: "300px" }}>
+        <p
+          className="text-body-sm"
+          style={{
+            marginTop: "10px",
+            width: "100%",
+            maxWidth: "none",
+            fontSize: "13px",
+            lineHeight: "20px",
+            whiteSpace: "nowrap",
+          }}
+        >
           질문, 답변, 처리 중인 회고록을 한 화면에서 확인합니다.
         </p>
       </header>
@@ -226,7 +258,7 @@ export default function Home() {
         <>
           <div className="flex gap-2 overflow-x-auto">
             {memberChips.map((chip, index) => {
-              const colors = chip.connected ? FAMILY_CHIP_COLORS.connected : FAMILY_CHIP_COLORS.pending;
+              const colors = getFamilyChipStyle(chip.label);
 
               return (
                 <span
@@ -279,21 +311,19 @@ export default function Home() {
                     : "아직 받은 질문이 없어요."}
                 </p>
               </div>
-              <Button
-                variant="primary"
-                size="sm"
-                disabled={!pendingQuestion}
-                onClick={() => pendingQuestion && router.push(`/questions/${pendingQuestion.questionSendId}`)}
-                style={{ marginTop: "18px" }}
-              >
-                답변 촬영
-              </Button>
-              <p
-                className="text-caption"
-                style={{ alignSelf: "flex-end", marginTop: "12px", color: "var(--text-3)" }}
-              >
-                {formatTime(pendingQuestion?.receivedAt ?? "")}
-              </p>
+              <div className="flex items-center justify-between" style={{ width: "100%", marginTop: "24px" }}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={!pendingQuestion}
+                  onClick={() => pendingQuestion && router.push(`/questions/${pendingQuestion.questionSendId}`)}
+                >
+                  답변 촬영
+                </Button>
+                <p className="text-caption" style={{ color: "var(--text-3)" }}>
+                  {formatTime(pendingQuestion?.receivedAt ?? "")}
+                </p>
+              </div>
             </div>
           </Card>
 
@@ -341,8 +371,13 @@ export default function Home() {
 
       <footer className="mt-auto flex flex-col gap-3">
         {!loading && summary && (
-          <div className="grid grid-cols-[1fr_auto] gap-3">
-            <Button variant="primary" size="lg" fullWidth onClick={() => router.push("/questions/new")}>
+          <div className="flex gap-3">
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => router.push("/questions/new")}
+              style={{ flex: 1, height: "52px", borderRadius: "var(--radius-full)" }}
+            >
               질문 만들기
             </Button>
             <Button
@@ -350,6 +385,9 @@ export default function Home() {
               size="lg"
               onClick={() => router.push("/diary")}
               style={{
+                flex: 1,
+                height: "52px",
+                borderRadius: "var(--radius-full)",
                 background: "var(--color-cream-50)",
                 border: "1.5px solid var(--color-cream-300)",
                 color: "var(--color-ink-700)",

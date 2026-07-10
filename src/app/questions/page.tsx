@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, BottomNav, Button, Card } from "@/components/ui";
+import { Badge, BottomNav, Card } from "@/components/ui";
 import { getReceivedQuestions } from "@/lib/api/answers";
 import type { QuestionStatus, ReceivedQuestion } from "@/lib/api/answers";
 import type { UserRole } from "@/lib/api/users";
@@ -124,9 +124,9 @@ export default function QuestionsPage() {
       {!error && questions !== null && questions.length === 0 && (
         <Card variant="base" elevation="flat" padding="18px" bg="var(--color-cream-100)">
           <p className="text-body-sm">아직 받은 질문이 없어요.</p>
-          <Button variant="soft" size="md" onClick={() => router.push("/questions/new")} style={{ marginTop: "14px" }}>
-            가족에게 질문 보내기
-          </Button>
+          <p className="text-caption" style={{ marginTop: "8px", color: "var(--text-3)" }}>
+            가족이 보낸 질문이 도착하면 여기에 표시돼요.
+          </p>
         </Card>
       )}
 

@@ -2,16 +2,13 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Camera, Lock, MessageCircle } from "lucide-react";
-import { Badge, BottomNav, Button, Card } from "@/components/ui";
+import { ArrowLeft } from "lucide-react";
+import { BottomNav, Button, Card } from "@/components/ui";
 import {
   getReceivedQuestionDetail,
   markReceivedQuestionRead,
 } from "@/lib/api/answers";
-import type {
-  QuestionStatus,
-  ReceivedQuestionDetail,
-} from "@/lib/api/answers";
+import type { ReceivedQuestionDetail } from "@/lib/api/answers";
 import type { UserRole } from "@/lib/api/users";
 
 const NAV_ITEMS = [
@@ -27,13 +24,6 @@ const ROLE_LABEL: Record<UserRole, string> = {
   father: "아빠",
 };
 
-const STATUS_LABEL: Record<QuestionStatus, string> = {
-  sent: "답변 대기",
-  answered: "답변 완료",
-  cancelled: "취소됨",
-  expired: "만료됨",
-};
-
 function formatSender(question: ReceivedQuestionDetail) {
   const role = ROLE_LABEL[question.sender.role];
   const name = question.sender.displayName;
@@ -47,10 +37,19 @@ function getRelationshipLabel(question: ReceivedQuestionDetail | null) {
   return ROLE_LABEL[question.sender.role];
 }
 
-function getStatus(question: ReceivedQuestionDetail): QuestionStatus {
-  if (question.answered) return "answered";
-
-  return question.status;
+function RedDot() {
+  return (
+    <span
+      style={{
+        width: "10px",
+        height: "10px",
+        borderRadius: "50%",
+        background: "var(--color-error)",
+        flexShrink: 0,
+        marginTop: "7px",
+      }}
+    />
+  );
 }
 
 export default function ReceivedQuestionDetailPage({
@@ -99,7 +98,6 @@ export default function ReceivedQuestionDetailPage({
   }, [questionSendId]);
 
   const relationshipLabel = getRelationshipLabel(question);
-  const status = question ? getStatus(question) : "sent";
 
   return (
     <div
@@ -200,68 +198,46 @@ export default function ReceivedQuestionDetailPage({
             padding="20px"
             bg="var(--color-coral-50)"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <span
+            <div className="flex items-start gap-3">
+              <RedDot />
+
+              <div>
+                <p
                   style={{
-                    width: "38px",
-                    height: "38px",
-                    borderRadius: "50%",
-                    background: "var(--color-coral-100)",
-                    color: "var(--color-coral-500)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "14px",
+                    fontWeight: "var(--weight-semibold)",
+                    color: "var(--text-1)",
                   }}
                 >
-                  <MessageCircle size={19} />
-                </span>
+                  {formatSender(question)}
+                </p>
 
-                <div>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: "14px",
-                      fontWeight: "var(--weight-semibold)",
-                      color: "var(--text-1)",
-                    }}
-                  >
-                    {formatSender(question)}
-                  </p>
-
-                  <p
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: "20px",
-                      fontWeight: "var(--weight-semibold)",
-                      lineHeight: "30px",
-                      color: "var(--text-1)",
-                      marginTop: "12px",
-                    }}
-                  >
-                    “{question.questionText}”
-                  </p>
-                </div>
+                <p
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "20px",
+                    fontWeight: "var(--weight-semibold)",
+                    lineHeight: "30px",
+                    color: "var(--text-1)",
+                    marginTop: "12px",
+                  }}
+                >
+                  “{question.questionText}”
+                </p>
               </div>
-
-              <Badge
-                variant={status === "answered" ? "success" : "default"}
-                size="md"
-              >
-                {STATUS_LABEL[status]}
-              </Badge>
             </div>
           </Card>
 
           <div className="flex flex-col gap-3">
-            <Card variant="base" elevation="subtle" padding="16px">
+            <Card
+              variant="base"
+              elevation="subtle"
+              padding="16px"
+              bg="var(--color-cream-200)"
+            >
               <div className="flex items-start gap-3">
-                <Camera
-                  size={20}
-                  color="var(--color-sage-500)"
-                  style={{ flexShrink: 0, marginTop: "2px" }}
-                />
+                <RedDot />
 
                 <div>
                   <p
@@ -282,13 +258,14 @@ export default function ReceivedQuestionDetailPage({
               </div>
             </Card>
 
-            <Card variant="base" elevation="subtle" padding="16px">
+            <Card
+              variant="base"
+              elevation="subtle"
+              padding="16px"
+              bg="var(--color-cream-200)"
+            >
               <div className="flex items-start gap-3">
-                <Lock
-                  size={20}
-                  color="var(--color-amber-300)"
-                  style={{ flexShrink: 0, marginTop: "2px" }}
-                />
+                <RedDot />
 
                 <div>
                   <p

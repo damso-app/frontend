@@ -4,9 +4,14 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Webcam from "react-webcam";
 import { BottomNav, Button, Card } from "@/components/ui";
-import { requestAnswerUploadUrl, submitAnswer, uploadAnswerVideo } from "@/lib/api/answers";
-import { getQuestionDetail } from "@/lib/api/questions";
-import type { ReceivedQuestionDetail, UserRole } from "@/lib/api/questions";
+import {
+  getReceivedQuestionDetail,
+  requestAnswerUploadUrl,
+  submitAnswer,
+  uploadAnswerVideo,
+} from "@/lib/api/answers";
+import type { ReceivedQuestionDetail } from "@/lib/api/answers";
+import type { UserRole } from "@/lib/api/users";
 
 type CaptureState = "idle" | "recording" | "recorded";
 type SubmitState = "idle" | "uploading" | "submitting" | "submitted" | "error";
@@ -59,7 +64,7 @@ export default function RecordAnswerPage({ params }: { params: Promise<{ questio
 
   useEffect(() => {
     let cancelled = false;
-    getQuestionDetail(questionSendId)
+    getReceivedQuestionDetail(questionSendId)
       .then((data) => {
         if (!cancelled) setQuestion(data);
       })

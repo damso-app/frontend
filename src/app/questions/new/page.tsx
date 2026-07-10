@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Send, Sparkles } from "lucide-react";
-import { Avatar, BottomNav, Button, Card, Textarea, Toast, ToastContainer } from "@/components/ui";
+import { ArrowLeft, Send } from "lucide-react";
+import { BottomNav, Button, Card, Textarea, Toast, ToastContainer } from "@/components/ui";
 import {
   getCurrentUserFamilyMembers,
   getQuestionRecommendations,
@@ -24,17 +24,21 @@ function getReceiverLabel(receiver: QuestionReceiver | null) {
   return receiver.roleLabel || receiver.name;
 }
 
-function chipStyle(active: boolean) {
+function optionBlockStyle(active: boolean) {
   return {
-    height: "38px",
+    minWidth: "92px",
+    minHeight: "48px",
     padding: "0 18px",
-    borderRadius: "var(--radius-full)",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "var(--radius-xl)",
     border: active ? "1.5px solid var(--color-coral-300)" : "1px solid var(--hairline-soft)",
-    background: active ? "var(--color-coral-100)" : "var(--color-cream-100)",
+    background: active ? "var(--color-coral-50)" : "var(--color-cream-100)",
     color: active ? "var(--color-coral-600)" : "var(--text-2)",
     fontFamily: "var(--font-sans)",
     fontSize: "14px",
-    fontWeight: "var(--weight-medium)",
+    fontWeight: "var(--weight-semibold)",
     cursor: "pointer",
     whiteSpace: "nowrap" as const,
     flexShrink: 0,
@@ -123,7 +127,7 @@ export default function NewQuestionPage() {
         setRecommendationsLoading(true);
         setRecommendationError("");
         setSelectedQuestionId("");
-        return getQuestionRecommendations(selectedTheme.category, selectedReceiver.role);
+        return getQuestionRecommendations(selectedTheme.category, selectedReceiver.role, 3);
       })
       .then((data) => {
         if (!cancelled) setRecommendations(data);
@@ -266,34 +270,9 @@ export default function NewQuestionPage() {
                   setSelectedQuestionId("");
                   setCustomQuestion("");
                 }}
-                style={{
-                  minWidth: "92px",
-                  minHeight: "86px",
-                  padding: "10px 12px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
-                  borderRadius: "var(--radius-xl)",
-                  border: active ? "1.5px solid var(--color-coral-300)" : "1px solid var(--hairline-soft)",
-                  background: active ? "var(--color-coral-50)" : "var(--color-cream-100)",
-                  color: "var(--text-2)",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
+                style={optionBlockStyle(active)}
               >
-                <Avatar size="md" name={receiver.name} src={receiver.profileImageUrl ?? undefined} />
-                <span
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: "13px",
-                    fontWeight: "var(--weight-medium)",
-                    color: active ? "var(--color-coral-600)" : "var(--text-2)",
-                  }}
-                >
-                  {receiver.roleLabel}
-                </span>
+                {receiver.roleLabel}
               </button>
             );
           })}
@@ -329,7 +308,7 @@ export default function NewQuestionPage() {
                     setSelectedQuestionId("");
                     setCustomQuestion("");
                   }}
-                  style={chipStyle(active)}
+                  style={optionBlockStyle(active)}
                 >
                   {theme.name}
                 </button>
@@ -370,39 +349,35 @@ export default function NewQuestionPage() {
                 variant="base"
                 elevation={active ? "card" : "subtle"}
                 padding="17px"
-                bg={active ? "var(--color-coral-50)" : "var(--canvas)"}
+                bg={active ? "var(--color-sage-50)" : "var(--canvas)"}
                 onClick={() => {
                   setSelectedQuestionId(question.id);
                   setCustomQuestion("");
                 }}
                 style={{
-                  border: active ? "1.5px solid var(--color-coral-300)" : "1px solid var(--hairline-soft)",
+                  border: active ? "1.5px solid var(--color-sage-300)" : "1px solid var(--hairline-soft)",
                   borderRadius: "24px",
                 }}
               >
                 <div className="flex items-start gap-3">
                   <span
                     style={{
-                      width: "34px",
-                      height: "34px",
+                      width: "10px",
+                      height: "10px",
+                      marginTop: "6px",
                       display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
                       borderRadius: "50%",
-                      background: active ? "var(--color-coral-100)" : "var(--color-cream-100)",
-                      color: active ? "var(--color-coral-500)" : "var(--color-sage-500)",
+                      background: active ? "var(--color-sage-500)" : "var(--color-coral-400)",
                       flexShrink: 0,
                     }}
-                  >
-                    <Sparkles size={17} />
-                  </span>
+                  />
                   <div>
                     <p
                       style={{
                         fontFamily: "var(--font-sans)",
                         fontSize: "14px",
                         fontWeight: "var(--weight-semibold)",
-                        color: active ? "var(--color-coral-600)" : "var(--text-1)",
+                        color: active ? "var(--color-sage-600)" : "var(--text-1)",
                         lineHeight: 1.45,
                       }}
                     >
@@ -455,7 +430,7 @@ export default function NewQuestionPage() {
         </Button>
         <BottomNav
           items={NAV_ITEMS}
-          activeId="qna"
+          activeId="home"
           onChange={(id) => {
             if (id === "home") router.push("/");
             if (id === "qna") router.push("/questions");

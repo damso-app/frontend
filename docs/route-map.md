@@ -11,10 +11,10 @@
 | 3 | 역할 선택 (자식/엄마/아빠) | `/onboarding/role` | 문서 확인 필요 | 미구현 |
 | 4 | 가족 생성 · 초대 코드 공유 | `/family/create` | 문서 확인 필요 | 미구현 |
 | 4 | 초대 코드로 가족 합류 | `/family/join` | 문서 확인 필요 | 미구현 |
-| 5 | 홈 | `/` | 문서 확인 필요 | 미구현 (현재 CNA 기본 템플릿) |
-| 5 | 질문 목록 확인 | `/questions` | `GET /api/v1/answers/questions` | 미구현 |
-| 5 | 질문 상세 / 읽음 처리 | `/questions/[questionSendId]` | `GET /api/v1/answers/questions/{id}`, `PATCH .../read` | 미구현 |
-| 6 | 자녀가 질문 보내기 | `/questions/new` (가칭) | **Question 발송 API 미확인** — 이 문서(Answer API)에는 수신자 측 API만 있음 | 미구현 |
+| 5 | 홈 | `/` | `GET /api/v1/home/summary` | **구현됨** (`src/app/page.tsx`). "질문 만들기" CTA는 `/questions/new`로 이동 |
+| 5 | 질문 목록 확인 | `/questions` | `GET /api/v1/answers/questions` | **구현됨** (`src/app/questions/page.tsx`). BottomNav의 `qna` 탭 목적지이며 받은 질문 리스트만 표시 |
+| 5 | 질문 상세 / 읽음 처리 | `/questions/[questionSendId]` | `GET /api/v1/answers/questions/{id}`, `PATCH .../read` | **구현됨** (`src/app/questions/[questionSendId]/page.tsx`). 받은 질문 선택 시 진입 |
+| 6 | 자녀가 질문 보내기 | `/questions/new` | Question 발송 API | **구현됨** (`src/app/questions/new/page.tsx`). 홈 화면 "질문 만들기"에서 진입하는 작성 플로우 |
 | 7 | 영상 답변 기록 | `/questions/[questionSendId]/record` | `POST /api/v1/answers/upload-url` → GCS PUT → `POST /api/v1/answers` | **구현됨** (`src/app/questions/[questionSendId]/record`). API 클라이언트는 `src/lib/api/answers.ts` |
 | 8 | AI 처리 상태 (submit 시 바로 processing→completed/failed) | `/answers/[answerId]/processing` | `GET /api/v1/answers/{answer_id}/clip` (임시 폴링), 추후 Supabase Realtime `family:{family_id}` 채널 `answer_status_updated`로 교체 예정 | **구현됨** (`src/app/answers/[answerId]/processing`). F-07 제출 성공 시 이 라우트로 이동 |
 | 9 | 네컷 그리드 (날짜별 그룹) | `/diary` | `GET /api/v1/clips` → `{ groups: [{ date, clips: [{answerId,status,thumbnailUrl}] }] }` | **구현됨** (`src/app/diary`). API 클라이언트는 `src/lib/api/clips.ts` |
@@ -33,6 +33,8 @@
 | `qna` | 질문&답변 | `/questions` |
 | `diary` | 다이어리 | `/diary` |
 | `settings` | 설정 | `/settings` |
+
+`/questions/new`는 하단 탭의 직접 목적지가 아니라 홈의 "질문 만들기" CTA에서 진입하는 질문 작성 화면이다. `qna` 탭은 항상 `/questions`의 받은 질문 리스트로 돌아간다.
 
 ## 실측 확인된 스키마 (2026-07-08, 로컬 백엔드 `/openapi.json` + 실제 호출 기준)
 
