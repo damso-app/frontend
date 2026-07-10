@@ -6,6 +6,12 @@
 
 ## 2026-07-10
 
+- **프롬프트 요약**: 배포 프론트/백엔드 URL 기준 CORS preflight 오류 확인 및 설정 보강
+- **작업 구현 요약**: Cloud Run 백엔드가 `https://damso-eight.vercel.app` origin의 OPTIONS 요청에 `400 Disallowed CORS origin`을 반환하는 것을 확인하고, 브라우저가 백엔드 절대 URL을 직접 호출하던 카카오 auth API를 Next rewrite(`/api`) 경유 호출로 통일
+- **변경점**: `src/lib/api/auth.ts`, `PROMPT_LOG.md` 수정
+
+---
+
 =======
 
 - **프롬프트 요약**: 코드리뷰 지적 3건 수정 — (3) failed 상태를 프론트에서 구분 못 함, (4) 0초 녹화가 검증 없이 제출됨, (5) 포괄적 catch가 409/415/422를 다 뭉갬
