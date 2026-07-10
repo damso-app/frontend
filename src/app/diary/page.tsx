@@ -129,6 +129,7 @@ export default function DiaryPage() {
 
           {monthGroups.map((group) => {
             const allCompleted = group.clips.every((clip) => clip.status === "completed");
+            const hasFailed = group.clips.some((clip) => clip.status === "failed");
             return (
               <Card
                 key={group.date}
@@ -166,8 +167,8 @@ export default function DiaryPage() {
                     </div>
                   </div>
 
-                  <Badge variant={allCompleted ? "success" : "default"} size="md">
-                    {allCompleted ? "완료" : "처리 중"}
+                  <Badge variant={allCompleted ? "success" : hasFailed ? "error" : "default"} size="md">
+                    {allCompleted ? "완료" : hasFailed ? "실패" : "처리 중"}
                   </Badge>
                 </div>
               </Card>
