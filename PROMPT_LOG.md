@@ -6,6 +6,12 @@
 
 ## 2026-07-10
 
+- **프롬프트 요약**: 가족 생성자가 초대 코드 공유 후 상대방이 실제로 연결됐는지 확인할 방법이 없고, 연결돼도 자동으로 홈 이동이 안 되는 문제 수정
+- **작업 구현 요약**: `FamilyInviteScreen`이 `status === "ready"`(초대 코드 발급 완료, 공유 대기)일 때 3초 간격으로 `getMyOnboardingStatus()`를 폴링해 `familyConnected`/`onboardingCompleted`가 true가 되면 즉시 `/`(홈)으로 리다이렉트하도록 추가. 대기 중임을 알 수 있게 "⏳ 가족 연결 대기 중이에요. 상대방이 코드를 입력하면 자동으로 홈으로 이동해요." 안내 문구도 함께 표시
+- **변경점**: `src/components/onboarding/FamilyInviteScreen.tsx` 수정
+
+## 2026-07-10
+
 - **프롬프트 요약**: 백엔드 버그 리포트 반영 — 카카오 로그인 후 두 사용자가 각자 별도 가족을 자동 생성해 서로 연결이 영원히 실패(`POST /families/join` 409)하는 문제 수정
 - **작업 구현 요약**: 원인 2가지 확인 후 수정. (1) `FamilyInviteScreen`(`/onboarding/family-connect`)이 `GET /families/me/invitation` 404(정상적인 "가족 없음" 상태)를 받으면 곧바로 `POST /families`를 자동 호출해 가족을 만들어버리던 로직 제거 — 대신 `"no-family"` 상태로 전환해 "가족 만들기"/"코드로 참여하기" 중 사용자가 명시적으로 선택하게 변경, 동시에 두 사람이 "가족 만들기"를 누르면 안 된다는 안내 문구 추가. (2) `src/lib/api/families.ts`의 `createFamily`/`joinFamily`가 401 외 모든 에러(409 포함)를 목(mock) 성공 응답으로 바꿔치기하던 try/catch 제거 — 이 때문에 `FamilyCodeScreen`에 이미 있던 409("이미 가족에 연결되어 있습니다") 안내 문구가 실제로는 화면에 뜨지 못하던 문제도 같이 해결됨
 - **변경점**: `src/components/onboarding/FamilyInviteScreen.tsx`, `src/lib/api/families.ts` 수정

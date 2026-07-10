@@ -14,6 +14,7 @@ import { clearAccessToken, getAccessToken } from "@/lib/auth/token";
 
 const INVITE_CODE_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const INVITE_CODE_LENGTH = 6;
+const FAMILY_CONNECTION_POLL_INTERVAL_MS = 3000;
 
 function generateInviteCode() {
   const randomValues = new Uint32Array(INVITE_CODE_LENGTH);
@@ -175,6 +176,38 @@ export function FamilyInviteScreen() {
     void loadInvitation();
   }, [loadInvitation]);
 
+  // 생성자는 초대 코드를 공유한 뒤 상대방이 실제로 합류했는지 확인할 방법이 없었다.
+  // 상대방이 코드로 합류하면 내 온보딩 상태의 familyConnected가 true로 바뀌므로,
+  // 이걸 주기적으로 확인해서 연결되는 즉시 홈으로 이동시킨다.
+  useEffect(() => {
+    if (status !== "ready") return;
+
+    let cancelled = false;
+
+    const checkConnection = async () => {
+      try {
+        const onboardingStatus = await getMyOnboardingStatus();
+        if (cancelled) return;
+
+        if (onboardingStatus.familyConnected || onboardingStatus.onboardingCompleted) {
+          router.replace("/");
+        }
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          clearAccessToken();
+          router.replace("/login");
+        }
+      }
+    };
+
+    const intervalId = window.setInterval(checkConnection, FAMILY_CONNECTION_POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [status, router]);
+
   const copyInviteText = async () => {
     if (!inviteText) return false;
 
@@ -317,6 +350,13 @@ export function FamilyInviteScreen() {
           ) : (
             <>
               <InviteCodeCard inviteCode={displayInviteCode} isLoading={!displayInviteCode} />
+              <p
+                className="text-caption"
+                role="status"
+                style={{ margin: 0, textAlign: "center", color: "var(--color-coral-500)", fontWeight: "var(--weight-semibold)" }}
+              >
+                ⏳ 가족 연결 대기 중이에요. 상대방이 코드를 입력하면 자동으로 홈으로 이동해요.
+              </p>
               <InfoBox
                 title="카카오톡 초대 보내기"
                 description="카카오톡에서 링크를 누르면 알아서 초대 코드로 바로 연결됩니다."
