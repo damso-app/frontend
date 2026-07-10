@@ -6,6 +6,12 @@
 
 ## 2026-07-10
 
+- **프롬프트 요약**: 질문→목록→영상답변→제출→AI처리→다이어리→상세 전체 플로우 라우팅 연결 검토
+- **작업 구현 요약**: 전체 화면(F-05~F-11)의 라우팅/API 시그니처를 코드로 추적해 연결 자체는 정상임을 확인. 그 과정에서 `next.config.ts`/`src/lib/api/client.ts`가 `NEXT_PUBLIC_API_BASE_URL`을 요구하는데 `.env`엔 옛 이름 `NEXT_PUBLIC_API_URL`만 있어 `next build`가 config 로드 단계에서 즉시 실패하는 치명적 문제 발견(실제 빌드로 재현 확인) — `.env` 이름 수정, Vercel 프로젝트 환경변수도 동일하게 바꿔야 함을 안내. 그 외 자잘한 문제 3건 수정: (1) `/questions/new` BottomNav가 `activeId="home"`으로 잘못 강조되던 것 `"qna"`로 수정 (2) `/questions/{id}` 상세에서 이미 답변/취소/만료된 질문일 때 버튼만 비활성화되고 이유가 안 보이던 것에 안내 문구 추가 (3) `getAnswerClip`이 응답을 무검증 캐스팅만 하던 것을 다른 정규화 함수들과 같은 패턴(`normalizeAnswerClip`)으로 방어적 파싱하도록 변경
+- **변경점**: `.env`(gitignore, 로컬만), `src/app/questions/new/page.tsx`, `src/app/questions/[questionSendId]/page.tsx`, `src/lib/api/answers.ts` 수정
+
+## 2026-07-10
+
 - **프롬프트 요약**: 라이브 백엔드에 `videoDurationSeconds` 응답 필드가 실제로 추가됐는지 재확인 후 F-10에 반영
 - **작업 구현 요약**: 배포된 백엔드 `/openapi.json`을 재조회해 `ClipDetailResponse`에 `videoDurationSeconds`가 추가된 것 확인(직전 확인 시점엔 없었음 — 배포 반영 타이밍 차이였음). `AnswerClip` 타입에 `videoDurationSeconds: number | null` 추가하고, F-10 미니컷 카드에 제목 아래 "MM:SS" 형식으로 영상 길이 표시
 - **변경점**: `src/lib/api/answers.ts`, `src/app/diary/[date]/page.tsx`, `docs/route-map.md` 수정

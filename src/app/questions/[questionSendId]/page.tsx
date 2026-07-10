@@ -291,6 +291,21 @@ export default function ReceivedQuestionDetailPage({
       )}
 
       <div className="flex flex-col gap-3" style={{ marginTop: "auto" }}>
+        {question && question.answered && (
+          <p className="text-body-sm text-center" style={{ color: "var(--text-3)" }}>
+            이미 답변을 제출한 질문이에요.
+          </p>
+        )}
+        {question && !question.answered && question.status === "cancelled" && (
+          <p className="text-body-sm text-center" style={{ color: "var(--text-3)" }}>
+            보낸 사람이 취소한 질문이에요.
+          </p>
+        )}
+        {question && !question.answered && question.status === "expired" && (
+          <p className="text-body-sm text-center" style={{ color: "var(--text-3)" }}>
+            답변 기한이 지난 질문이에요.
+          </p>
+        )}
         <Button
           variant="primary"
           size="lg"

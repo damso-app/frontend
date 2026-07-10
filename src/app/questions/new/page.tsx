@@ -430,7 +430,7 @@ export default function NewQuestionPage() {
         </Button>
         <BottomNav
           items={NAV_ITEMS}
-          activeId="home"
+          activeId="qna"
           onChange={(id) => {
             if (id === "home") router.push("/");
             if (id === "qna") router.push("/questions");
