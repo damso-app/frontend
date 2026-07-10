@@ -6,7 +6,17 @@
 
 ## 2026-07-10
 
-=======
+- **프롬프트 요약**: BottomNav에 작은 아이콘 추가 (이모지 대신 flaticon류 일반 SVG 스타일)
+- **작업 구현 요약**: `BottomNav`가 이미 지원하던 `icon?: ReactNode` prop을 채워넣음. 새 아이콘 컴포넌트를 만들지 않고 이미 의존성에 있던 `lucide-react`(Button.tsx 주석의 "e.g. Lucide icon" 컨벤션과 일치)를 사용: 홈=`Home`, 질문&답변=`MessageCircleQuestion`, 다이어리=`BookOpen`, 설정=`Settings`, 전부 `size={14}`. 7개 화면의 중복된 `NAV_ITEMS` 배열 각각에 동일하게 적용
+- **변경점**: `src/app/diary/page.tsx`, `src/app/diary/[date]/page.tsx`, `src/app/diary/[date]/[answerId]/page.tsx`, `src/app/answers/[answerId]/processing/page.tsx`, `src/app/questions/[questionSendId]/page.tsx`, `src/app/questions/[questionSendId]/record/page.tsx`, `src/app/questions/[questionSendId]/record/permission/page.tsx` 수정
+
+## 2026-07-10
+
+- **프롬프트 요약**: 질문→답변 플로우 라우팅 구조 전수 검토 후 발견한 문제 중 2건 수정 (①`/questions` 부재는 보류, ②처리완료 화면의 "답변 영상 보기" 잘못된 경로, ③전 화면 BottomNav `onChange` 미연결)
+- **작업 구현 요약**: ② processing 페이지가 폴링하는 `getClipGrid()` 결과에서 완료된 answerId가 속한 `date`를 `completedDate` state로 저장해두고, "답변 영상 보기"가 `/diary/${answerId}`(존재하지 않는 라우트) 대신 실제 상세 라우트인 `/diary/${completedDate}/${answerId}`로 이동하도록 수정. ③ F-06/F-07/F-15/F-08/F-09/F-10/F-11 7개 화면 전부 `BottomNav`에 `onChange`가 연결 안 돼 하단 탭이 무반응이던 문제를, 각 파일에 `NAV_ROUTES`(home→`/`, qna→`/questions`, diary→`/diary`, settings→`/settings`) 매핑을 추가해 해결. `/questions`, `/settings`는 아직 라우트가 없어 그 두 탭은 여전히 404이지만(①로 보류), 나머지 탭 이동은 정상 동작
+- **변경점**: `src/app/answers/[answerId]/processing/page.tsx`, `src/app/diary/page.tsx`, `src/app/diary/[date]/page.tsx`, `src/app/diary/[date]/[answerId]/page.tsx`, `src/app/questions/[questionSendId]/page.tsx`, `src/app/questions/[questionSendId]/record/page.tsx`, `src/app/questions/[questionSendId]/record/permission/page.tsx` 수정
+
+## 2026-07-10
 
 - **프롬프트 요약**: 코드리뷰 지적 3건 수정 — (3) failed 상태를 프론트에서 구분 못 함, (4) 0초 녹화가 검증 없이 제출됨, (5) 포괄적 catch가 409/415/422를 다 뭉갬
 - **작업 구현 요약**: (3) `/v1/clips`가 이미 내려주는 `status`(failed 포함)를 다이어리 목록/그룹 화면에서 반영해 "실패" 배지·라벨 추가, processing 페이지는 완료 전 항상 404인 `getAnswerClip` 대신 `/v1/clips`에서 해당 answerId의 실제 status를 폴링해 완료/실패를 구분(네트워크 오류는 콘솔 로그만 남기고 상태는 단정하지 않음). (4) 녹화 시작~정지 타임스탬프로 실제 길이를 계산해 1초 미만이면 제출 화면으로 넘어가지 않고 재촬영 안내. (5) `ApiError.status`로 409(이미 제출·재시도 UI 자체 제거하고 질문 목록으로 유도)/415(형식 오류)/422(정보 오류)를 구분한 메시지로 분기

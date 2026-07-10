@@ -14,12 +14,6 @@ const NAV_ITEMS = [
   { id: "settings", label: "설정", icon: <Settings size={14} /> },
 ];
 
-const NAV_ROUTES: Record<string, string> = {
-  home: "/",
-  qna: "/questions",
-  diary: "/diary",
-  settings: "/settings",
-};
 
 function formatRelativeDay(dateStr: string) {
   const date = new Date(`${dateStr}T00:00:00`);

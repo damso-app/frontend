@@ -71,6 +71,7 @@ export default function CutDetailPage({
     };
   }, [date, answerId]);
 
+  // getClipGrid()가 answerId 오름차순으로 정렬해서 내려주므로 여기서 다시 정렬할 필요는 없다.
   const index = siblingClips?.findIndex((c) => String(c.answerId) === answerId) ?? -1;
   const prevClip = index > 0 ? siblingClips?.[index - 1] : undefined;
   const nextClip = siblingClips && index >= 0 && index < siblingClips.length - 1 ? siblingClips[index + 1] : undefined;

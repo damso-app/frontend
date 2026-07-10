@@ -14,12 +14,6 @@ const NAV_ITEMS = [
   { id: "settings", label: "설정", icon: <Settings size={14} /> },
 ];
 
-const NAV_ROUTES: Record<string, string> = {
-  home: "/",
-  qna: "/questions",
-  diary: "/diary",
-  settings: "/settings",
-};
 
 export default function RecordPermissionPage({ params }: { params: Promise<{ questionSendId: string }> }) {
   const { questionSendId } = use(params);

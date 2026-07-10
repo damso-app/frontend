@@ -16,12 +16,6 @@ const NAV_ITEMS = [
   { id: "settings", label: "설정", icon: <Settings size={14} /> },
 ];
 
-const NAV_ROUTES: Record<string, string> = {
-  home: "/",
-  qna: "/questions",
-  diary: "/diary",
-  settings: "/settings",
-};
 
 export default function AnswerProcessingPage({ params }: { params: Promise<{ answerId: string }> }) {
   const { answerId } = use(params);
