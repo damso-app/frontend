@@ -6,6 +6,10 @@
 
 ## 2026-07-12
 
+- **프롬프트 요약**: 배포된 사이트에서 약관 버튼을 눌러도 약관 내용이 뜨지 않는 문제 수정
+- **작업 구현 요약**: 약관 동의 화면에서 체크박스 로딩/저장 비활성 상태가 오른쪽 "약관" 버튼까지 같이 막아, 약관 조회 API가 늦거나 실패하면 내용을 열람할 수 없던 구조를 수정. `AgreementCheckbox`에 `actionDisabled` prop을 추가해 체크박스 비활성화와 약관 보기 버튼 비활성화를 분리하고, `/agreements`에서는 로딩 중에도 약관 모달을 열 수 있도록 연결
+- **변경점**: `src/components/onboarding/AgreementCheckbox.tsx`, `src/app/agreements/page.tsx`, `PROMPT_LOG.md` 수정
+
 - **프롬프트 요약**: 약관 동의 화면의 오른쪽 약관 버튼을 누르면 서비스에 맞게 작성된 약관 내용을 볼 수 있도록 연결
 - **작업 구현 요약**: `AgreementCheckbox`에 오른쪽 버튼 클릭 핸들러(`onAction`)를 받을 수 있게 추가하고, `/agreements` 화면에 각 필수 동의 항목별 상세 약관 데이터를 작성. 담소의 카카오 로그인, 가족 초대·합류, 질문 발송, 영상 답변, AI 처리(`submitted`/`processing`/`completed`/`failed`), 네컷 다이어리·상세 기록 흐름을 반영해 서비스 이용약관, 개인정보 처리 동의, 카메라·마이크 권한 안내, 데이터 활용 동의 전문을 구성. 오른쪽 "약관" 버튼을 누르면 디자인 시스템 `Modal`로 해당 약관을 스크롤 가능한 형태로 표시하고 확인 버튼으로 닫히도록 구현
 - **변경점**: `src/app/agreements/page.tsx`, `src/components/onboarding/AgreementCheckbox.tsx`, `PROMPT_LOG.md` 수정

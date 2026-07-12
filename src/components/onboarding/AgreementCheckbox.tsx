@@ -11,6 +11,7 @@ interface AgreementCheckboxProps {
   onChange: ChangeEventHandler<HTMLInputElement>;
   onAction?: () => void;
   actionLabel?: string;
+  actionDisabled?: boolean;
   disabled?: boolean;
 }
 
@@ -23,7 +24,10 @@ export function AgreementCheckbox({
   onAction,
   actionLabel = "약관",
   disabled = false,
+  actionDisabled = disabled,
 }: AgreementCheckboxProps) {
+  const isActionDisabled = actionDisabled || !onAction;
+
   return (
     <Card
       variant="base"
@@ -105,7 +109,7 @@ export function AgreementCheckbox({
           type="button"
           aria-label={`${title} 보기`}
           onClick={onAction}
-          disabled={disabled}
+          disabled={isActionDisabled}
           style={{
             minWidth: "48px",
             height: "30px",
@@ -114,8 +118,8 @@ export function AgreementCheckbox({
             borderRadius: "var(--radius-full)",
             background: "var(--color-coral-50)",
             color: "var(--color-coral-600)",
-            cursor: disabled ? "not-allowed" : "pointer",
-            opacity: disabled ? 0.65 : 1,
+            cursor: isActionDisabled ? "not-allowed" : "pointer",
+            opacity: isActionDisabled ? 0.65 : 1,
             fontFamily: "var(--font-sans)",
             fontSize: "13px",
             fontWeight: "var(--weight-semibold)",

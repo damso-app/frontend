@@ -308,6 +308,7 @@ export default function AgreementsPage() {
             description={agreement.description}
             checked={checked[agreement.id]}
             disabled={isLoadingAgreements || isSaving}
+            actionDisabled={false}
             onAction={() => setSelectedAgreementId(agreement.id)}
             onChange={(event) =>
               setChecked((current) => ({
