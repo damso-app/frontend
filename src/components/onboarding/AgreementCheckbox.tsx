@@ -9,6 +9,7 @@ interface AgreementCheckboxProps {
   description?: ReactNode;
   checked: boolean;
   onChange: ChangeEventHandler<HTMLInputElement>;
+  onAction?: () => void;
   actionLabel?: string;
   disabled?: boolean;
 }
@@ -19,6 +20,7 @@ export function AgreementCheckbox({
   description,
   checked,
   onChange,
+  onAction,
   actionLabel = "약관",
   disabled = false,
 }: AgreementCheckboxProps) {
@@ -102,10 +104,7 @@ export function AgreementCheckbox({
         <button
           type="button"
           aria-label={`${title} 보기`}
-          onClick={() => {
-            // TODO: 약관 상세 화면 또는 모달이 확정되면 연결한다.
-            console.log("agreement detail requested", id);
-          }}
+          onClick={onAction}
           disabled={disabled}
           style={{
             minWidth: "48px",
