@@ -38,19 +38,12 @@ function getSentQuestionForFather(summary: HomeSummary) {
 
 function getMemberChips(summary: HomeSummary) {
   const activeRoleSet = new Set(summary.connectedMembers.filter((member) => member.active).map((member) => member.role));
-  const pendingResponseRoleSet = new Set(
-    [summary.latestSentQuestion, ...summary.latestSentQuestions]
-      .filter((question): question is LatestSentQuestionSummary => Boolean(question))
-      .filter((question) => question.status === "sent" && !question.answered)
-      .map((question) => question.recipient.role),
-  );
 
   if (summary.role === "child") {
     return (["mother", "father"] as const).map((role) => {
       const connected = activeRoleSet.has(role);
-      const statusLabel = connected && pendingResponseRoleSet.has(role) ? "답변 대기" : `연결${connected ? "됨" : " 대기"}`;
       return {
-        label: `${ROLE_LABEL[role]} ${statusLabel}`,
+        label: `${ROLE_LABEL[role]} 연결${connected ? "됨" : " 대기"}`,
         connected,
       };
     });
@@ -58,14 +51,11 @@ function getMemberChips(summary: HomeSummary) {
 
   if (summary.role === "mother" || summary.role === "father") {
     const connected = summary.connectedMembers.length > 0 ? activeRoleSet.has("child") : summary.connectedToChild;
-    const statusLabel = connected && pendingResponseRoleSet.has("child") ? "답변 대기" : `연결${connected ? "됨" : " 대기"}`;
-    return [{ label: `자녀 ${statusLabel}`, connected }];
+    return [{ label: `자녀 연결${connected ? "됨" : " 대기"}`, connected }];
   }
 
   const chips = summary.connectedMembers.map((member) => ({
-    label: `${member.roleLabel} ${
-      member.active && pendingResponseRoleSet.has(member.role) ? "답변 대기" : `연결${member.active ? "됨" : " 대기"}`
-    }`,
+    label: `${member.roleLabel} 연결${member.active ? "됨" : " 대기"}`,
     connected: member.active,
   }));
   if (chips.length > 0) return chips;
@@ -77,14 +67,6 @@ function getMemberChips(summary: HomeSummary) {
 }
 
 function getFamilyChipStyle(label: string): CSSProperties {
-  if (label.includes("답변 대기")) {
-    return {
-      background: "var(--color-coral-50)",
-      border: "1px solid var(--color-coral-300)",
-      color: "var(--color-coral-500)",
-    };
-  }
-
   if (label.includes("연결됨")) {
     return {
       background: "var(--color-sage-500)",

@@ -92,10 +92,12 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
 
   const elapsedSec = elapsedMs / 1000;
   const fallbackProgress = Math.min(95, (elapsedSec / ESTIMATED_TOTAL_SECONDS) * 100);
-  const displayProgress = completed ? 100 : apiProgress ?? fallbackProgress;
+  const displayProgress = completed || finishing ? 100 : apiProgress ?? fallbackProgress;
   const statusLabel = completed ? "완료" : failed ? "실패" : finishing ? "마무리 중" : "처리 중";
   const statusColor = completed || finishing ? "var(--color-sage-400)" : failed ? "var(--color-error)" : "var(--text-3)";
-  const stepMessage = finishing ? "AI가 완성해서 준비하고 있어요." : `${Math.round(displayProgress)}%`;
+  const stepMessage = finishing
+    ? "AI가 답변을 정리해서 전달하고 있어요. 잠시만 기다려주세요."
+    : `${Math.round(displayProgress)}%`;
 
   return (
     <div
