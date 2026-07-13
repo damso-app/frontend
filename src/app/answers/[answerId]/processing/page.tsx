@@ -2,6 +2,7 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { BottomNav, Button, Card } from "@/components/ui";
 import { getAnswerProgress } from "@/lib/api/answers";
 import { getClipGrid } from "@/lib/api/clips";
@@ -104,34 +105,43 @@ export default function AnswerProcessingPage({ params }: { params: Promise<{ ans
       className="mx-auto flex min-h-screen w-full flex-col gap-6 px-5 pb-8 pt-6"
       style={{ maxWidth: "var(--page-max-width)", background: "var(--canvas)" }}
     >
-      <div>
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "13px",
-            fontWeight: "var(--weight-medium)",
-            color: "var(--color-sage-400)",
-          }}
-        >
-          처리 중
-        </p>
-        <h1
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "24px",
-            fontWeight: "var(--weight-bold)",
-            lineHeight: "29px",
-            color: "var(--text-1)",
-            marginTop: "8px",
-          }}
-        >
-          영상 회고록을
-          <br />
-          정리하고 있어요
-        </h1>
-        <p className="text-body-sm" style={{ marginTop: "8px" }}>
-          AI가 답변을 정리하는 동안 잠시만 기다려주세요. 30초 정도 소요됩니다.
-        </p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              fontWeight: "var(--weight-medium)",
+              color: "var(--color-sage-400)",
+            }}
+          >
+            처리 중
+          </p>
+          <h1
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "24px",
+              fontWeight: "var(--weight-bold)",
+              lineHeight: "29px",
+              color: "var(--text-1)",
+              marginTop: "8px",
+            }}
+          >
+            영상 회고록을
+            <br />
+            정리하고 있어요
+          </h1>
+          <p className="text-body-sm" style={{ marginTop: "8px" }}>
+            AI가 답변을 정리하는 동안 잠시만 기다려주세요. 30초 정도 소요됩니다.
+          </p>
+        </div>
+        <Image
+          src="/logo.svg"
+          alt="담소"
+          width={84}
+          height={38}
+          style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+        />
       </div>
 
       <Card variant="base" elevation="card" padding="var(--space-lg)">

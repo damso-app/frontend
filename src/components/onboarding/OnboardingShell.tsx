@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 
 interface OnboardingShellProps {
@@ -32,37 +33,46 @@ export function OnboardingShell({
         ...style,
       }}
     >
-      <header style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-        <p
-          style={{
-            margin: 0,
-            fontFamily: "var(--font-sans)",
-            fontSize: "13px",
-            fontWeight: "var(--weight-semibold)",
-            letterSpacing: "0",
-            color: "var(--primary)",
-          }}
-        >
-          {eyebrow}
-        </p>
-        <h1
-          style={{
-            margin: 0,
-            fontFamily: "var(--font-sans)",
-            fontSize: "32px",
-            fontWeight: "var(--weight-bold)",
-            lineHeight: 1.22,
-            letterSpacing: "0",
-            color: "var(--text-1)",
-          }}
-        >
-          {title}
-        </h1>
-        {description && (
-          <p className="text-body-sm" style={{ margin: 0, color: "var(--text-2)" }}>
-            {description}
+      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", minWidth: 0 }}>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              fontWeight: "var(--weight-semibold)",
+              letterSpacing: "0",
+              color: "var(--primary)",
+            }}
+          >
+            {eyebrow}
           </p>
-        )}
+          <h1
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-sans)",
+              fontSize: "32px",
+              fontWeight: "var(--weight-bold)",
+              lineHeight: 1.22,
+              letterSpacing: "0",
+              color: "var(--text-1)",
+            }}
+          >
+            {title}
+          </h1>
+          {description && (
+            <p className="text-body-sm" style={{ margin: 0, color: "var(--text-2)" }}>
+              {description}
+            </p>
+          )}
+        </div>
+        <Image
+          src="/logo.svg"
+          alt="담소"
+          width={84}
+          height={38}
+          style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+        />
       </header>
 
       <section

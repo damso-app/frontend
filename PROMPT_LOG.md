@@ -4,6 +4,12 @@
 
 ---
 
+## 2026-07-13
+
+- **프롬프트 요약**: 새로 추가한 favicon(`damso_favicon.svg`)과 로고(`logo.svg`) 적용 — favicon 우선 적용 후, 로고를 헤더 우측에 배치
+- **작업 구현 요약**: Next.js 기본 `favicon.ico`(스톡 로고)를 삭제하고 `damso_favicon.svg`를 `src/app/icon.svg`로 등록해 앱 라우터가 자동으로 favicon 태그를 생성하도록 함. 로고는 온보딩/로그인 플로우 5개 화면(`OnboardingShell`), 메인 탭 4개 화면(홈/다이어리/질문&답변/설정), 다이어리·질문 상세, 질문 작성/녹화/권한 안내, 설정 데이터 관리, AI 처리중 화면, 가족 생성/참여 관련 화면(공용 `PhoneCard`)까지 전체 페이지 헤더에 반영. 뒤로가기 버튼이 있는 화면은 버튼 줄은 그대로 두고 eyebrow+타이틀 블록만 `flex` 행으로 감싸 로고를 eyebrow 줄 높이에 맞춰 우측 정렬. 크기는 사용자와 1배/1.2배/1.5배 비교 후 1.2배(84x38px)로 확정. Playwright 스크린샷으로 여러 화면 검증
+- **변경점**: `src/app/icon.svg` 추가, `src/app/favicon.ico` 삭제, `public/damso_favicon.svg`·`public/logo.svg` 추가, `src/components/onboarding/OnboardingShell.tsx`·`src/components/onboarding/FamilyInviteScreen.tsx` 및 `page.tsx`(홈)/`diary/page.tsx`/`diary/[date]/page.tsx`/`diary/[date]/[answerId]/page.tsx`/`questions/page.tsx`/`questions/[questionSendId]/page.tsx`/`questions/[questionSendId]/record/page.tsx`/`questions/[questionSendId]/record/permission/page.tsx`/`questions/new/page.tsx`/`settings/page.tsx`/`settings/data/page.tsx`/`answers/[answerId]/processing/page.tsx` 수정
+
 ## 2026-07-12
 
 - **프롬프트 요약**: 배포된 사이트에서 약관 버튼을 눌러도 약관 내용이 뜨지 않는 문제 수정

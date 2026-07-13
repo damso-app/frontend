@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Badge, BottomNav, Card } from "@/components/ui";
 import { getClipGrid } from "@/lib/api/clips";
 import type { ClipGridGroup } from "@/lib/api/clips";
@@ -61,34 +62,43 @@ export default function DiaryPage() {
       className="mx-auto flex min-h-screen w-full flex-col gap-6 px-5 pb-8 pt-6"
       style={{ maxWidth: "var(--page-max-width)", background: "var(--canvas)" }}
     >
-      <div>
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "13px",
-            fontWeight: "var(--weight-medium)",
-            color: "var(--primary)",
-          }}
-        >
-          가족 다이어리
-        </p>
-        <h1
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "24px",
-            fontWeight: "var(--weight-bold)",
-            lineHeight: "29px",
-            color: "var(--text-1)",
-            marginTop: "8px",
-          }}
-        >
-          우리 가족의
-          <br />
-          저장된 회고록
-        </h1>
-        <p className="text-body-sm" style={{ marginTop: "8px" }}>
-          답변은 가족 다이어리에 저장되고, 확인할 수 있어요.
-        </p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              fontWeight: "var(--weight-medium)",
+              color: "var(--primary)",
+            }}
+          >
+            가족 다이어리
+          </p>
+          <h1
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "24px",
+              fontWeight: "var(--weight-bold)",
+              lineHeight: "29px",
+              color: "var(--text-1)",
+              marginTop: "8px",
+            }}
+          >
+            우리 가족의
+            <br />
+            저장된 회고록
+          </h1>
+          <p className="text-body-sm" style={{ marginTop: "8px" }}>
+            답변은 가족 다이어리에 저장되고, 확인할 수 있어요.
+          </p>
+        </div>
+        <Image
+          src="/logo.svg"
+          alt="담소"
+          width={84}
+          height={38}
+          style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+        />
       </div>
 
       {error && (

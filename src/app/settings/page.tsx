@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Avatar, BottomNav, Button, Card } from "@/components/ui";
 import { ApiError } from "@/lib/api/client";
 import { getHomeQuestionSummary } from "@/lib/api/home";
@@ -63,34 +64,43 @@ export default function SettingsPage() {
       className="mx-auto flex min-h-screen w-full flex-col gap-6 px-5 pb-8 pt-6"
       style={{ maxWidth: "var(--page-max-width)", background: "var(--canvas)" }}
     >
-      <div>
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "13px",
-            fontWeight: "var(--weight-medium)",
-            color: "var(--primary)",
-          }}
-        >
-          설정
-        </p>
-        <h1
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "24px",
-            fontWeight: "var(--weight-bold)",
-            lineHeight: "29px",
-            color: "var(--text-1)",
-            marginTop: "8px",
-          }}
-        >
-          가족 기록의
-          <br />
-          보관 방식
-        </h1>
-        <p className="text-body-sm" style={{ marginTop: "8px" }}>
-          연결된 가족, 알림, 저장된 데이터 보관 방식을 관리합니다.
-        </p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              fontWeight: "var(--weight-medium)",
+              color: "var(--primary)",
+            }}
+          >
+            설정
+          </p>
+          <h1
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "24px",
+              fontWeight: "var(--weight-bold)",
+              lineHeight: "29px",
+              color: "var(--text-1)",
+              marginTop: "8px",
+            }}
+          >
+            가족 기록의
+            <br />
+            보관 방식
+          </h1>
+          <p className="text-body-sm" style={{ marginTop: "8px" }}>
+            연결된 가족, 알림, 저장된 데이터 보관 방식을 관리합니다.
+          </p>
+        </div>
+        <Image
+          src="/logo.svg"
+          alt="담소"
+          width={84}
+          height={38}
+          style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+        />
       </div>
 
       <Card variant="base" elevation="card" padding="17px">

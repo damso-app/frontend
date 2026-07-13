@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { BottomNav, Button, Card } from "@/components/ui";
 import { NAV_ITEMS, NAV_ROUTES } from "@/lib/navigation";
 
@@ -47,34 +48,43 @@ export default function SettingsDataPage() {
         ← 뒤로가기
       </button>
 
-      <div>
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "13px",
-            fontWeight: "var(--weight-medium)",
-            color: "var(--primary)",
-          }}
-        >
-          데이터 관리
-        </p>
-        <h1
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "24px",
-            fontWeight: "var(--weight-bold)",
-            lineHeight: "29px",
-            color: "var(--text-1)",
-            marginTop: "8px",
-          }}
-        >
-          내 기록을
-          <br />
-          직접 관리해요
-        </h1>
-        <p className="text-body-sm" style={{ marginTop: "8px" }}>
-          사용자가 가족 기록을 내려받고, 저장된 GIF와 데이터를 삭제할 수 있어야 합니다.
-        </p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              fontWeight: "var(--weight-medium)",
+              color: "var(--primary)",
+            }}
+          >
+            데이터 관리
+          </p>
+          <h1
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "24px",
+              fontWeight: "var(--weight-bold)",
+              lineHeight: "29px",
+              color: "var(--text-1)",
+              marginTop: "8px",
+            }}
+          >
+            내 기록을
+            <br />
+            직접 관리해요
+          </h1>
+          <p className="text-body-sm" style={{ marginTop: "8px" }}>
+            사용자가 가족 기록을 내려받고, 저장된 GIF와 데이터를 삭제할 수 있어야 합니다.
+          </p>
+        </div>
+        <Image
+          src="/logo.svg"
+          alt="담소"
+          width={84}
+          height={38}
+          style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+        />
       </div>
 
       <Card variant="sage" elevation="subtle" padding="var(--space-md)">

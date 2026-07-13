@@ -2,6 +2,7 @@
 
 import { use, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { BottomNav, Button, Card } from "@/components/ui";
 import { NAV_ITEMS } from "@/lib/navigation";
 
@@ -47,34 +48,43 @@ export default function RecordPermissionPage({ params }: { params: Promise<{ que
         ← 뒤로가기
       </button>
 
-      <div>
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "13px",
-            fontWeight: "var(--weight-medium)",
-            color: "var(--color-sage-400)",
-          }}
-        >
-          권한 안내
-        </p>
-        <h1
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "28px",
-            fontWeight: "var(--weight-bold)",
-            lineHeight: "29px",
-            color: "var(--text-1)",
-            marginTop: "8px",
-          }}
-        >
-          카메라를
-          <br />
-          열 수 없어요
-        </h1>
-        <p className="text-body-sm" style={{ marginTop: "12px" }}>
-          현재 카메라와 마이크 권한이 설정되어 있지 않아요.
-        </p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              fontWeight: "var(--weight-medium)",
+              color: "var(--color-sage-400)",
+            }}
+          >
+            권한 안내
+          </p>
+          <h1
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "28px",
+              fontWeight: "var(--weight-bold)",
+              lineHeight: "29px",
+              color: "var(--text-1)",
+              marginTop: "8px",
+            }}
+          >
+            카메라를
+            <br />
+            열 수 없어요
+          </h1>
+          <p className="text-body-sm" style={{ marginTop: "12px" }}>
+            현재 카메라와 마이크 권한이 설정되어 있지 않아요.
+          </p>
+        </div>
+        <Image
+          src="/logo.svg"
+          alt="담소"
+          width={84}
+          height={38}
+          style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+        />
       </div>
 
       <div

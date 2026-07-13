@@ -435,33 +435,42 @@ export function PhoneCard({
         flexDirection: "column",
       }}
     >
-      <header style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-        <p
-          style={{
-            margin: 0,
-            color: "var(--color-coral-500)",
-            fontSize: "13px",
-            fontWeight: "var(--weight-semibold)",
-            letterSpacing: "0",
-          }}
-        >
-          {eyebrow}
-        </p>
-        <h1
-          style={{
-            margin: 0,
-            color: "var(--text-1)",
-            fontSize: "32px",
-            fontWeight: "var(--weight-bold)",
-            lineHeight: 1.16,
-            letterSpacing: "0",
-          }}
-        >
-          {title}
-        </h1>
-        <p className="text-body-sm" style={{ margin: 0, color: "var(--text-2)", lineHeight: 1.55 }}>
-          {description}
-        </p>
+      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", minWidth: 0 }}>
+          <p
+            style={{
+              margin: 0,
+              color: "var(--color-coral-500)",
+              fontSize: "13px",
+              fontWeight: "var(--weight-semibold)",
+              letterSpacing: "0",
+            }}
+          >
+            {eyebrow}
+          </p>
+          <h1
+            style={{
+              margin: 0,
+              color: "var(--text-1)",
+              fontSize: "32px",
+              fontWeight: "var(--weight-bold)",
+              lineHeight: 1.16,
+              letterSpacing: "0",
+            }}
+          >
+            {title}
+          </h1>
+          <p className="text-body-sm" style={{ margin: 0, color: "var(--text-2)", lineHeight: 1.55 }}>
+            {description}
+          </p>
+        </div>
+        <Image
+          src="/logo.svg"
+          alt="담소"
+          width={84}
+          height={38}
+          style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+        />
       </header>
       <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", padding: "var(--space-lg) 0" }}>
         {children}

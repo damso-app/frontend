@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { BottomNav, Button, Card } from "@/components/ui";
 import {
@@ -120,37 +121,46 @@ export default function ReceivedQuestionDetailPage({
           <ArrowLeft size={18} />
         </button>
 
-        <div>
-          <p
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: "13px",
-              fontWeight: "var(--weight-medium)",
-              color: "var(--primary)",
-            }}
-          >
-            받은 질문
-          </p>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+          <div style={{ minWidth: 0 }}>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "13px",
+                fontWeight: "var(--weight-medium)",
+                color: "var(--primary)",
+              }}
+            >
+              받은 질문
+            </p>
 
-          <h1
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: "28px",
-              fontWeight: "var(--weight-bold)",
-              lineHeight: "34px",
-              color: "var(--text-1)",
-              marginTop: "8px",
-              letterSpacing: 0,
-            }}
-          >
-            {relationshipLabel}에게 온
-            <br />
-            질문이에요
-          </h1>
+            <h1
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "28px",
+                fontWeight: "var(--weight-bold)",
+                lineHeight: "34px",
+                color: "var(--text-1)",
+                marginTop: "8px",
+                letterSpacing: 0,
+              }}
+            >
+              {relationshipLabel}에게 온
+              <br />
+              질문이에요
+            </h1>
 
-          <p className="text-body-sm" style={{ marginTop: "10px" }}>
-            질문에 대해 답변 팁을 참고해도 돼요.
-          </p>
+            <p className="text-body-sm" style={{ marginTop: "10px" }}>
+              질문에 대해 답변 팁을 참고해도 돼요.
+            </p>
+          </div>
+          <Image
+            src="/logo.svg"
+            alt="담소"
+            width={84}
+            height={38}
+            style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+          />
         </div>
       </header>
 

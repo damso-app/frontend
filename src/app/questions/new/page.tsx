@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ArrowLeft, Send } from "lucide-react";
 import { BottomNav, Button, Card, Textarea, Toast, ToastContainer } from "@/components/ui";
 import {
@@ -197,35 +198,44 @@ export default function NewQuestionPage() {
         >
           <ArrowLeft size={18} />
         </button>
-        <div>
-          <p
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: "13px",
-              fontWeight: "var(--weight-medium)",
-              color: "var(--primary)",
-            }}
-          >
-            질문하기
-          </p>
-          <h1
-            style={{
-              fontFamily: "var(--font-sans)",
-              fontSize: "28px",
-              fontWeight: "var(--weight-bold)",
-              lineHeight: "34px",
-              color: "var(--text-1)",
-              marginTop: "8px",
-              letterSpacing: 0,
-            }}
-          >
-            질문을 골라
-            <br />
-            보내세요
-          </h1>
-          <p className="text-body-sm" style={{ marginTop: "10px" }}>
-            질문 대상과 깊이에 맞춰 AI가 질문을 추천합니다.
-          </p>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+          <div style={{ minWidth: 0 }}>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "13px",
+                fontWeight: "var(--weight-medium)",
+                color: "var(--primary)",
+              }}
+            >
+              질문하기
+            </p>
+            <h1
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "28px",
+                fontWeight: "var(--weight-bold)",
+                lineHeight: "34px",
+                color: "var(--text-1)",
+                marginTop: "8px",
+                letterSpacing: 0,
+              }}
+            >
+              질문을 골라
+              <br />
+              보내세요
+            </h1>
+            <p className="text-body-sm" style={{ marginTop: "10px" }}>
+              질문 대상과 깊이에 맞춰 AI가 질문을 추천합니다.
+            </p>
+          </div>
+          <Image
+            src="/logo.svg"
+            alt="담소"
+            width={84}
+            height={38}
+            style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+          />
         </div>
       </header>
 

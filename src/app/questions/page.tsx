@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Badge, BottomNav, Button, Card } from "@/components/ui";
 import { getReceivedQuestions } from "@/lib/api/answers";
 import type { QuestionStatus, ReceivedQuestion } from "@/lib/api/answers";
@@ -70,35 +71,44 @@ export default function QuestionsPage() {
       className="mx-auto flex min-h-screen w-full flex-col gap-6 px-5 pb-8 pt-6"
       style={{ maxWidth: "var(--page-max-width)", background: "var(--canvas)" }}
     >
-      <header>
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "13px",
-            fontWeight: "var(--weight-medium)",
-            color: "var(--primary)",
-          }}
-        >
-          질문&답변
-        </p>
-        <h1
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "28px",
-            fontWeight: "var(--weight-bold)",
-            lineHeight: "34px",
-            color: "var(--text-1)",
-            marginTop: "8px",
-            letterSpacing: 0,
-          }}
-        >
-          받은 질문을
-          <br />
-          확인하세요
-        </h1>
-        <p className="text-body-sm" style={{ marginTop: "10px" }}>
-          답변을 기다리는 질문 {pendingCount}개가 있어요.
-        </p>
+      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              fontWeight: "var(--weight-medium)",
+              color: "var(--primary)",
+            }}
+          >
+            질문&답변
+          </p>
+          <h1
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "28px",
+              fontWeight: "var(--weight-bold)",
+              lineHeight: "34px",
+              color: "var(--text-1)",
+              marginTop: "8px",
+              letterSpacing: 0,
+            }}
+          >
+            받은 질문을
+            <br />
+            확인하세요
+          </h1>
+          <p className="text-body-sm" style={{ marginTop: "10px" }}>
+            답변을 기다리는 질문 {pendingCount}개가 있어요.
+          </p>
+        </div>
+        <Image
+          src="/logo.svg"
+          alt="담소"
+          width={84}
+          height={38}
+          style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+        />
       </header>
 
       {error && (

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import { BottomNav, Button, Card } from "@/components/ui";
 import { ApiError } from "@/lib/api/client";
@@ -198,45 +199,54 @@ export default function Home() {
       className="mx-auto flex min-h-screen w-full flex-col gap-5 px-5 pb-8 pt-6"
       style={{ maxWidth: "var(--page-max-width)", background: "var(--canvas)" }}
     >
-      <header>
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "13px",
-            fontWeight: "var(--weight-semibold)",
-            color: "var(--primary)",
-          }}
-        >
-          홈
-        </p>
-        <h1
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "31px",
-            fontWeight: "var(--weight-bold)",
-            lineHeight: "38px",
-            color: "var(--text-1)",
-            marginTop: "8px",
-            letterSpacing: 0,
-          }}
-        >
-          오늘 가족과
-          <br />
-          남길 기록
-        </h1>
-        <p
-          className="text-body-sm"
-          style={{
-            marginTop: "10px",
-            width: "100%",
-            maxWidth: "none",
-            fontSize: "13px",
-            lineHeight: "20px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          질문, 답변, 처리 중인 회고록을 한 화면에서 확인합니다.
-        </p>
+      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--space-md)" }}>
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "13px",
+              fontWeight: "var(--weight-semibold)",
+              color: "var(--primary)",
+            }}
+          >
+            홈
+          </p>
+          <h1
+            style={{
+              fontFamily: "var(--font-sans)",
+              fontSize: "31px",
+              fontWeight: "var(--weight-bold)",
+              lineHeight: "38px",
+              color: "var(--text-1)",
+              marginTop: "8px",
+              letterSpacing: 0,
+            }}
+          >
+            오늘 가족과
+            <br />
+            남길 기록
+          </h1>
+          <p
+            className="text-body-sm"
+            style={{
+              marginTop: "10px",
+              width: "100%",
+              maxWidth: "none",
+              fontSize: "13px",
+              lineHeight: "20px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            질문, 답변, 처리 중인 회고록을 한 화면에서 확인합니다.
+          </p>
+        </div>
+        <Image
+          src="/logo.svg"
+          alt="담소"
+          width={84}
+          height={38}
+          style={{ flexShrink: 0, width: "84px", height: "38px", objectFit: "contain" }}
+        />
       </header>
 
       {loading && (
