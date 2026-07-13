@@ -1,10 +1,13 @@
 import { apiFetch } from "./client";
 import type { AnswerStatus } from "./answers";
+import type { UserRole } from "./users";
 
 export interface ClipGridItem {
   answerId: number;
   status: AnswerStatus;
   thumbnailUrl: string | null;
+  answererRole: UserRole;
+  answererName: string;
 }
 
 export interface ClipGridGroup {

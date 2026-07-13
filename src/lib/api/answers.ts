@@ -23,6 +23,7 @@ export interface ReceivedQuestion {
   answered: boolean;
   answeredAt: string | null;
   status: QuestionStatus;
+  answerId: number | null;
 }
 
 export interface ReceivedQuestionDetail extends ReceivedQuestion {
@@ -134,6 +135,7 @@ function normalizeReceivedQuestion(input: unknown): ReceivedQuestion {
     answered: getBoolean(source, "answered"),
     answeredAt: getNullableString(source, "answeredAt"),
     status: normalizeQuestionStatus(getString(source, "status")),
+    answerId: getNullableNumber(source, "answerId"),
   };
 }
 
@@ -212,6 +214,8 @@ export interface AnswerClip {
   videoUrl: string | null;
   videoDurationSeconds: number | null;
   thumbnailUrl: string | null;
+  answererRole: UserRole;
+  answererName: string;
   transcript: string | null;
   transcriptSegments: unknown[] | null;
   title: string | null;
@@ -230,6 +234,8 @@ function normalizeAnswerClip(input: unknown): AnswerClip {
     videoUrl: getNullableString(source, "videoUrl"),
     videoDurationSeconds: getNullableNumber(source, "videoDurationSeconds"),
     thumbnailUrl: getNullableString(source, "thumbnailUrl"),
+    answererRole: normalizeRole(getString(source, "answererRole")),
+    answererName: getString(source, "answererName"),
     transcript: getNullableString(source, "transcript"),
     transcriptSegments: getNullableArray(source, "transcriptSegments"),
     title: getNullableString(source, "title"),

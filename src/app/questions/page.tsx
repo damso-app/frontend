@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Badge, BottomNav, Button, Card } from "@/components/ui";
 import { getReceivedQuestions } from "@/lib/api/answers";
 import type { QuestionStatus, ReceivedQuestion } from "@/lib/api/answers";
+import { getClipGrid } from "@/lib/api/clips";
 import type { UserRole } from "@/lib/api/users";
 import { NAV_ITEMS } from "@/lib/navigation";
 
@@ -17,7 +18,7 @@ const ROLE_LABEL: Record<UserRole, string> = {
 
 const STATUS_LABEL: Record<QuestionStatus, string> = {
   sent: "답변 대기",
-  answered: "답변 완료",
+  answered: "열람하기",
   cancelled: "취소됨",
   expired: "만료됨",
 };
@@ -46,6 +47,7 @@ export default function QuestionsPage() {
   const router = useRouter();
   const [questions, setQuestions] = useState<ReceivedQuestion[] | null>(null);
   const [error, setError] = useState("");
+  const [resolvingAnswerId, setResolvingAnswerId] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,6 +67,32 @@ export default function QuestionsPage() {
   }, []);
 
   const pendingCount = useMemo(() => questions?.filter((question) => !question.answered).length ?? 0, [questions]);
+
+  const handleViewAnswer = async (question: ReceivedQuestion) => {
+    if (question.answerId == null) {
+      router.push(`/questions/${question.questionSendId}`);
+      return;
+    }
+
+    setResolvingAnswerId(question.answerId);
+
+    try {
+      const groups = await getClipGrid();
+      const group = groups.find((g) => g.clips.some((c) => c.answerId === question.answerId));
+
+      if (group) {
+        router.push(`/diary/${group.date}/${question.answerId}`);
+        return;
+      }
+
+      router.push(`/questions/${question.questionSendId}`);
+    } catch (err) {
+      console.error("[Questions] Failed to resolve answer clip", err);
+      router.push(`/questions/${question.questionSendId}`);
+    } finally {
+      setResolvingAnswerId(null);
+    }
+  };
 
   return (
     <div
@@ -153,7 +181,11 @@ export default function QuestionsPage() {
               variant="base"
               elevation="card"
               padding="16px"
-              onClick={status === "answered" ? undefined : () => router.push(`/questions/${question.questionSendId}`)}
+              onClick={
+                status === "answered"
+                  ? () => handleViewAnswer(question)
+                  : () => router.push(`/questions/${question.questionSendId}`)
+              }
               style={{
                 border: question.read ? "1px solid var(--hairline-soft)" : "1.5px solid var(--color-coral-300)",
               }}
@@ -178,7 +210,9 @@ export default function QuestionsPage() {
                   </p>
                 </div>
                 <Badge variant={status === "answered" ? "success" : "default"} size="md">
-                  {STATUS_LABEL[status]}
+                  {status === "answered" && resolvingAnswerId === question.answerId
+                    ? "불러오는 중..."
+                    : STATUS_LABEL[status]}
                 </Badge>
               </div>
             </Card>

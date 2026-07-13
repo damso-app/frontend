@@ -8,11 +8,18 @@ import { getAnswerClip } from "@/lib/api/answers";
 import type { AnswerClip } from "@/lib/api/answers";
 import { getClipGrid } from "@/lib/api/clips";
 import type { ClipGridGroup } from "@/lib/api/clips";
+import type { UserRole } from "@/lib/api/users";
 import { NAV_ITEMS, NAV_ROUTES } from "@/lib/navigation";
 
-function formatMonthLabel(dateStr: string) {
-  const [year, month] = dateStr.split("-");
-  return `${year}.${month}`;
+const ROLE_LABEL: Record<UserRole, string> = {
+  child: "자녀",
+  mother: "엄마",
+  father: "아빠",
+};
+
+function formatDateLabel(dateStr: string) {
+  const [year, month, day] = dateStr.split("-");
+  return `${year}.${month}.${day}`;
 }
 
 function formatClipDuration(totalSeconds: number) {
@@ -145,7 +152,7 @@ export default function FourCutGroupPage({ params }: { params: Promise<{ date: s
         <>
           <div className="flex gap-2">
             <Badge variant="default" size="lg">답변 {group.clips.length}개</Badge>
-            <Badge variant="outline" size="lg">{formatMonthLabel(group.date)}</Badge>
+            <Badge variant="outline" size="lg">{formatDateLabel(group.date)}</Badge>
           </div>
 
           <Card variant="feature" elevation="card">
@@ -195,6 +202,22 @@ export default function FourCutGroupPage({ params }: { params: Promise<{ date: s
                         style={{ background: "linear-gradient(to top, rgba(20,18,14,0.65), rgba(20,18,14,0) 55%)" }}
                       />
                     )}
+                    <span
+                      className="absolute"
+                      style={{
+                        left: "8px",
+                        top: "8px",
+                        padding: "3px 8px",
+                        borderRadius: "var(--radius-full)",
+                        background: "rgba(20,18,14,0.55)",
+                        color: "#fff",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: "11px",
+                        fontWeight: "var(--weight-medium)",
+                      }}
+                    >
+                      {ROLE_LABEL[clip.answererRole]} 답변
+                    </span>
                     {isCompleted && (
                       <div
                         className="absolute flex items-center justify-center"

@@ -6,20 +6,38 @@ import Image from "next/image";
 import { Badge, BottomNav, Card } from "@/components/ui";
 import { getClipGrid } from "@/lib/api/clips";
 import type { ClipGridGroup } from "@/lib/api/clips";
+import type { UserRole } from "@/lib/api/users";
 import { NAV_ITEMS } from "@/lib/navigation";
 
+const ROLE_LABEL: Record<UserRole, string> = {
+  child: "자녀",
+  mother: "엄마",
+  father: "아빠",
+};
 
-function formatRelativeDay(dateStr: string) {
+function getGroupAnswererLabel(group: ClipGridGroup) {
+  const [first, ...rest] = group.clips;
+  if (!first) return "가족";
+  return rest.every((clip) => clip.answererRole === first.answererRole) ? ROLE_LABEL[first.answererRole] : "가족";
+}
+
+function getDiffDays(dateStr: string) {
   const date = new Date(`${dateStr}T00:00:00`);
   const now = new Date();
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  const diffDays = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
+  return Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
+}
 
+function formatRelativeDay(diffDays: number) {
   if (diffDays <= 0) return "오늘";
   if (diffDays === 1) return "어제";
   if (diffDays < 7) return `${diffDays}일 전`;
   if (diffDays < 14) return "지난주";
-  return `${date.getMonth() + 1}.${date.getDate()}`;
+  return "예전";
+}
+
+function formatCardTitle(diffDays: number, answererLabel: string) {
+  return `${formatRelativeDay(diffDays)} ${answererLabel}의 회고록`;
 }
 
 function formatMonthLabel(dateStr: string) {
@@ -89,7 +107,7 @@ export default function DiaryPage() {
             저장된 회고록
           </h1>
           <p className="text-body-sm" style={{ marginTop: "8px" }}>
-            답변은 가족 다이어리에 저장되고, 확인할 수 있어요.
+            매일 가족 다이어리에 저장되고, 가족들과 나눈 이야기를 확인할 수 있어요.
           </p>
         </div>
         <Image
@@ -135,6 +153,8 @@ export default function DiaryPage() {
           {monthGroups.map((group) => {
             const allCompleted = group.clips.every((clip) => clip.status === "completed");
             const hasFailed = group.clips.some((clip) => clip.status === "failed");
+            const diffDays = getDiffDays(group.date);
+            const answererLabel = getGroupAnswererLabel(group);
             return (
               <Card
                 key={group.date}
@@ -164,10 +184,10 @@ export default function DiaryPage() {
                           color: "var(--text-1)",
                         }}
                       >
-                        가족 회고록
+                        {formatCardTitle(diffDays, answererLabel)}
                       </p>
                       <p className="text-caption" style={{ marginTop: "4px" }}>
-                        {formatRelativeDay(group.date)} · 답변 {group.clips.length}개
+                        답변 {group.clips.length}개
                       </p>
                     </div>
                   </div>

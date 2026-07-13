@@ -112,9 +112,16 @@ export default function RecordAnswerPage({
 
     getReceivedQuestionDetail(questionSendId)
       .then((data) => {
-        if (!cancelled) {
-          setQuestion(data);
+        if (cancelled) {
+          return;
         }
+
+        if (data.answered) {
+          router.replace(`/questions/${questionSendId}`);
+          return;
+        }
+
+        setQuestion(data);
       })
       .catch((error) => {
         console.error("질문 조회 실패", error);
@@ -123,7 +130,7 @@ export default function RecordAnswerPage({
     return () => {
       cancelled = true;
     };
-  }, [questionSendId]);
+  }, [questionSendId, router]);
 
   useEffect(() => {
     if (captureState !== "recording") {

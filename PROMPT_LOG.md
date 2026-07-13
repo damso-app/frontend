@@ -6,6 +6,30 @@
 
 ## 2026-07-13
 
+- **프롬프트 요약**: 백엔드가 `ClipGridItem`/`ClipDetailResponse`에 `answererRole`/`answererName`을 추가한 뒤, 보류했던 다이어리 답변자 구분(F-10 role 칩 + `/diary` 목록 제목 개인화) 마무리
+- **작업 구현 요약**: 라이브 `openapi.json`으로 두 응답 모두 `answererRole`(`UserRole` enum)/`answererName`(string, 둘 다 required)이 반영된 것 확인. `src/lib/api/clips.ts`의 `ClipGridItem`, `src/lib/api/answers.ts`의 `AnswerClip`(`normalizeAnswerClip`에서 `normalizeRole` 재사용)에 타입 추가. `src/app/diary/page.tsx`: 그룹 내 클립이 전부 같은 답변자면 그 role 라벨, 섞여있으면 "가족"으로 판별하는 `getGroupAnswererLabel` 추가, 카드 제목을 "{상대 날짜} {답변자}의 회고록" 형태로 통일(기존엔 7일 미만일 때만 "가족 회고록", 그 이상만 상대 날짜 포함하던 것을 전체 구간에 일관 적용, 캡션의 중복 상대 날짜 표기 제거). `src/app/diary/[date]/page.tsx`: 미니컷 좌상단에 "{역할} 답변" 칩 추가(Figma node-id 68:42에 있던 요소, 2026-07-10부터 필드 없어 보류했던 것)
+- **변경점**: `src/lib/api/clips.ts`, `src/lib/api/answers.ts`, `src/app/diary/page.tsx`, `src/app/diary/[date]/page.tsx`, `docs/route-map.md` 수정
+
+- **프롬프트 요약**: 회고록 상세(`/diary/[date]`) 날짜 뱃지가 "YYYY.MM"으로 일자가 빠져있던 것을 "YYYY.MM.DD"로 수정. 논의 과정에서 (1) 그리드 그룹핑이 질문 발송일이 아니라 답변 제출일 기준임을 확인, (2) 발송일 기준으로 바꾸는 안은 "과거 날짜 그룹에 답변이 뒤늦게 채워지는" 경험 문제로 보류
+- **작업 구현 요약**: `formatMonthLabel(dateStr)` → `formatDateLabel(dateStr)`로 이름 변경하고 `${year}.${month}` 대신 `${year}.${month}.${day}` 반환하도록 수정, 뱃지 렌더링도 교체. (동명의 `formatMonthLabel`이 `/diary` 목록 페이지의 월별 섹션 헤더용으로 별도 존재 — 그쪽은 의도된 동작이라 변경 안 함)
+- **변경점**: `src/app/diary/[date]/page.tsx` 수정
+
+- **프롬프트 요약**: `/diary` 목록 카드를 답변자(엄마/아빠/자녀)별로 구분하고, 1주 전은 "지난주 OO의 회고록", 2주 이상은 "예전 OO의 회고록"으로 표현하고 싶다는 요청 검토
+- **작업 구현 요약**: 라이브 `openapi.json`으로 `ClipGridItem`/`ClipDetailResponse`에 답변자 role/이름 필드가 없는 것을 확인 — `questionSendId`가 있어도 해결 안 됨(`ReceivedQuestion.sender`는 질문을 보낸 사람이지 답변자가 아니고, 그 조회 API도 "내가 받은 질문"으로 스코프돼 있어 다른 가족 구성원 답변까지 조회할 수 없음). 사용자가 "날짜 라벨만 우선 반영, 답변자 구분은 보류"를 선택해 카드 제목을 diffDays 기준으로 동적 생성하도록 변경(7일 미만은 기존과 동일하게 "가족 회고록", 7~13일은 "지난주 가족 회고록", 14일 이상은 "예전 가족 회고록" — "OO" 자리는 role 필드 없어 우선 "가족"으로 대체, 필드 추가되면 교체 예정). `formatRelativeDay`를 날짜 문자열이 아닌 diffDays를 받도록 리팩터링해 제목/캡션에서 재계산 없이 공유
+- **변경점**: `src/app/diary/page.tsx` 수정
+
+- **프롬프트 요약**: `/diary` 다이어리 목록 화면 상단 안내 문구를 "매일 가족 다이어리에 저장되고, 가족들과 나눈 이야기를 확인할 수 있어요."로 변경
+- **작업 구현 요약**: 기존 "답변은 가족 다이어리에 저장되고, 확인할 수 있어요." 문구를 요청 문구로 교체
+- **변경점**: `src/app/diary/page.tsx` 수정
+
+- **프롬프트 요약**: 백엔드가 `ReceivedQuestionItem`/`ReceivedQuestionDetail` 응답에 `answerId`를 추가 후 "답변 완료 → 열람하기" 라우팅 구현
+- **작업 구현 요약**: 라이브 `openapi.json` 재확인으로 `answerId`(nullable) 필드 추가 확인. `src/lib/api/answers.ts`의 `ReceivedQuestion`에 `answerId: number | null` 추가하고 정규화 함수에서 파싱. `/questions` 목록에서 답변 완료 카드 배지 문구를 "답변 완료"→"열람하기"로 바꾸고, 클릭 시 `getClipGrid()`로 해당 `answerId`가 속한 날짜 그룹을 찾아 `/diary/[date]/[answerId]`로 이동(클립 상세 라우트가 `date`+`answerId` 둘 다 필요해서 매칭 후 이동하는 방식 채택). `answerId`가 없거나 클립 그룹 조회 실패 시엔 기존 질문 상세 화면으로 폴백. 매칭 중엔 배지에 "불러오는 중..." 표시. 카카오 로그인 없이는 브라우저 e2e 검증이 어려워 타입 체크로만 확인, 실기기 로그인 후 확인 권장
+- **변경점**: `src/lib/api/answers.ts`, `src/app/questions/page.tsx` 수정
+
+- **프롬프트 요약**: 답변 완료된 질문에 대한 재답변 차단이 목록/상세 화면에만 있고 녹화(record) 화면 자체엔 없던 문제 확인 후 수정
+- **작업 구현 요약**: 질문 목록(`answered ? undefined : onClick`)과 상세(`answered ? disabled 버튼`)는 이미 재답변을 막고 있었지만, `record/page.tsx`는 URL 직접 접근·뒤로가기 재진입 시 촬영까지 진행되고 실제 제출 시점에 백엔드 409 응답에만 의존해 막는 구조였음. 질문 상세 조회(`getReceivedQuestionDetail`) 응답의 `answered`가 true면 즉시 `/questions/[questionSendId]`로 리다이렉트하도록 가드 추가
+- **변경점**: `src/app/questions/[questionSendId]/record/page.tsx` 수정
+
 - **프롬프트 요약**: 새로 추가한 favicon(`damso_favicon.svg`)과 로고(`logo.svg`) 적용 — favicon 우선 적용 후, 로고를 헤더 우측에 배치
 - **작업 구현 요약**: Next.js 기본 `favicon.ico`(스톡 로고)를 삭제하고 `damso_favicon.svg`를 `src/app/icon.svg`로 등록해 앱 라우터가 자동으로 favicon 태그를 생성하도록 함. 로고는 온보딩/로그인 플로우 5개 화면(`OnboardingShell`), 메인 탭 4개 화면(홈/다이어리/질문&답변/설정), 다이어리·질문 상세, 질문 작성/녹화/권한 안내, 설정 데이터 관리, AI 처리중 화면, 가족 생성/참여 관련 화면(공용 `PhoneCard`)까지 전체 페이지 헤더에 반영. 뒤로가기 버튼이 있는 화면은 버튼 줄은 그대로 두고 eyebrow+타이틀 블록만 `flex` 행으로 감싸 로고를 eyebrow 줄 높이에 맞춰 우측 정렬. 크기는 사용자와 1배/1.2배/1.5배 비교 후 1.2배(84x38px)로 확정. Playwright 스크린샷으로 여러 화면 검증
 - **변경점**: `src/app/icon.svg` 추가, `src/app/favicon.ico` 삭제, `public/damso_favicon.svg`·`public/logo.svg` 추가, `src/components/onboarding/OnboardingShell.tsx`·`src/components/onboarding/FamilyInviteScreen.tsx` 및 `page.tsx`(홈)/`diary/page.tsx`/`diary/[date]/page.tsx`/`diary/[date]/[answerId]/page.tsx`/`questions/page.tsx`/`questions/[questionSendId]/page.tsx`/`questions/[questionSendId]/record/page.tsx`/`questions/[questionSendId]/record/permission/page.tsx`/`questions/new/page.tsx`/`settings/page.tsx`/`settings/data/page.tsx`/`answers/[answerId]/processing/page.tsx` 수정
