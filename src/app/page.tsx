@@ -83,6 +83,61 @@ function getFamilyChipStyle(label: string): CSSProperties {
   };
 }
 
+type HomeAnswerStatus = "submitted" | "processing" | "completed" | "failed";
+
+function normalizeAnswerStatus(status: string | null | undefined): HomeAnswerStatus | null {
+  const normalized = status?.toLowerCase();
+  if (normalized === "submitted" || normalized === "processing" || normalized === "completed" || normalized === "failed") {
+    return normalized;
+  }
+
+  return null;
+}
+
+function getSubmittedAnswerStatuses(summary: HomeSummary) {
+  const statuses = [
+    normalizeAnswerStatus(summary.aiStatus),
+    normalizeAnswerStatus(summary.latestSentQuestion?.aiStatus),
+    ...summary.latestSentQuestions.map((question) => normalizeAnswerStatus(question.aiStatus)),
+  ];
+
+  return statuses.filter((status): status is HomeAnswerStatus => status !== null);
+}
+
+function getAiSummaryCard(summary: HomeSummary) {
+  const statuses = getSubmittedAnswerStatuses(summary);
+
+  if (statuses.some((status) => status === "submitted" || status === "processing")) {
+    return {
+      title: "AI 정리 중",
+      body: "영상 업로드 완료 · 명대사를 추출하고 있어요.",
+      dotColor: "var(--color-coral-400)",
+    };
+  }
+
+  if (statuses.includes("failed")) {
+    return {
+      title: "AI 정리 실패",
+      body: "영상 정리가 완료되지 않았어요. 다이어리에서 상태를 확인해 주세요.",
+      dotColor: "var(--color-error)",
+    };
+  }
+
+  if (summary.todayCompletedCount > 0 || statuses.includes("completed")) {
+    return {
+      title: "정리 완료",
+      body: "업로드된 답변 영상이 가족 다이어리에 저장됐어요.",
+      dotColor: "var(--color-sage-400)",
+    };
+  }
+
+  return {
+    title: "업로드된 영상이 없습니다",
+    body: "가족이 영상으로 답변하면 AI 정리 상태가 여기에 표시돼요.",
+    dotColor: "var(--color-ink-300)",
+  };
+}
+
 function SentQuestionCard({ question }: { question: LatestSentQuestionSummary | null }) {
   const recipientLabel = question ? ROLE_LABEL[question.recipient.role] : "가족";
 
@@ -193,6 +248,7 @@ export default function Home() {
   const memberChips = useMemo(() => (summary ? getMemberChips(summary) : []), [summary]);
   const pendingQuestion = summary?.pendingReceivedQuestion ?? null;
   const fatherSentQuestion = summary ? getSentQuestionForFather(summary) : null;
+  const aiSummaryCard = summary ? getAiSummaryCard(summary) : null;
 
   return (
     <div
@@ -379,7 +435,7 @@ export default function Home() {
                     width: "8px",
                     height: "8px",
                     borderRadius: "var(--radius-full)",
-                    background: "var(--color-coral-400)",
+                    background: aiSummaryCard?.dotColor ?? "var(--color-ink-300)",
                     flexShrink: 0,
                     marginTop: "8px",
                   }}
@@ -393,12 +449,11 @@ export default function Home() {
                       color: "var(--color-ink-900)",
                     }}
                   >
-                    AI 정리 중
+                    {aiSummaryCard?.title}
                   </p>
                   <p className="text-body-sm" style={{ marginTop: "8px", color: "var(--color-ink-500)" }}>
-                    영상 업로드 완료 · 명대사를 추출하고 있어요.
+                    {aiSummaryCard?.body}
                   </p>
-                  {/* TODO: answers/video_clips Realtime 상태가 홈 API에 연결되면 실제 AI 처리 상태로 교체한다. */}
                 </div>
               </div>
             </Card>
