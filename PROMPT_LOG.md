@@ -6,6 +6,10 @@
 
 ## 2026-07-14
 
+- **프롬프트 요약**: 홈 화면 "서로에게 남길 말"에서 미답변 질문이 여러 개일 때 최신 질문이 아니라 예전 질문부터 답변하게 정렬
+- **작업 구현 요약**: 받은 질문 정렬 헬퍼를 추가해 미답변 질문을 우선하되 같은 그룹 안에서는 `receivedAt` 오래된 순으로 정렬. `/questions` 목록 API 정규화 결과에 이 정렬을 적용하고, 홈 요약 로딩 시 받은 질문 목록도 함께 조회해 "서로에게 남길 말" 카드가 오래된 미답변 질문을 우선 선택하도록 보강. 홈 요약 응답에 `pendingReceivedQuestions`/`receivedQuestions` 같은 배열이 포함되는 경우도 같은 정렬을 적용
+- **변경점**: `src/lib/questions/sort.ts`, `src/lib/api/answers.ts`, `src/lib/api/home.ts`, `PROMPT_LOG.md` 수정
+
 - **프롬프트 요약**: 홈 화면 "서로에게 남길말" 아래 블록 오른쪽 화살표 제거
 - **작업 구현 요약**: 홈의 보낸 질문 카드 오른쪽에 표시되던 `ChevronRight` 아이콘을 제거하고, 더 이상 쓰지 않는 lucide import도 정리
 - **변경점**: `src/app/page.tsx`, `PROMPT_LOG.md` 수정

@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import { sortReceivedQuestionsForAnswering } from "@/lib/questions/sort";
 import type { QuestionDepth } from "./questions";
 import type { UserRole } from "./users";
 
@@ -293,7 +294,7 @@ export async function getReceivedQuestions(options: GetReceivedQuestionsOptions 
   });
   const response = await apiFetch<unknown>(`/v1/answers/questions?${params.toString()}`);
 
-  return getArray(response, "questions").map(normalizeReceivedQuestion);
+  return sortReceivedQuestionsForAnswering(getArray(response, "questions").map(normalizeReceivedQuestion));
 }
 
 export async function getReceivedQuestionDetail(questionSendId: string) {
@@ -307,4 +308,3 @@ export function markReceivedQuestionRead(questionSendId: string) {
     method: "PATCH",
   });
 }
-

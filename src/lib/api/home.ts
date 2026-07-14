@@ -1,4 +1,6 @@
 import { ApiError, apiFetch } from "./client";
+import { getReceivedQuestions } from "./answers";
+import { sortReceivedQuestionsForAnswering } from "@/lib/questions/sort";
 import { getCurrentUserFamilyMembers } from "./questions";
 import type { QuestionDepth } from "./questions";
 import type { FamilyMemberRole, UserRole } from "./users";
@@ -197,6 +199,19 @@ function normalizePending(input: unknown): PendingReceivedQuestionSummary | null
   };
 }
 
+function normalizePendingQuestions(source: ApiRecord) {
+  return getArray(source, [
+    "pendingReceivedQuestions",
+    "pending_received_questions",
+    "receivedQuestions",
+    "received_questions",
+    "questions",
+  ])
+    .map(normalizePending)
+    .filter((question): question is PendingReceivedQuestionSummary => question !== null)
+    .filter((question) => question.status === "sent");
+}
+
 function normalizeLatestSent(input: unknown): LatestSentQuestionSummary | null {
   const source = asNullableRecord(input);
   if (!source) return null;
@@ -216,7 +231,11 @@ function normalizeLatestSent(input: unknown): LatestSentQuestionSummary | null {
   };
 }
 
-function normalizeHomeSummary(input: unknown, connectedMembers: HomeFamilyMemberSummary[]): HomeSummary {
+function normalizeHomeSummary(
+  input: unknown,
+  connectedMembers: HomeFamilyMemberSummary[],
+  receivedQuestions: PendingReceivedQuestionSummary[] = [],
+): HomeSummary {
   const source = asRecord(input);
   const role = normalizeFamilyMemberRole(getNullableString(source, ["role", "memberRole", "member_role"]) ?? "");
   const responseMembers = getArray(source, ["connectedMembers", "connected_members", "familyMembers", "family_members"]).map(
@@ -227,6 +246,11 @@ function normalizeHomeSummary(input: unknown, connectedMembers: HomeFamilyMember
     .map(normalizeLatestSent)
     .filter((question): question is LatestSentQuestionSummary => question !== null);
   const latestSentQuestion = normalizeLatestSent(source.latestSentQuestion ?? source.latest_sent_question);
+  const pendingReceivedQuestions = normalizePendingQuestions(source);
+  const pendingReceivedQuestion =
+    sortReceivedQuestionsForAnswering(receivedQuestions)[0] ??
+    sortReceivedQuestionsForAnswering(pendingReceivedQuestions)[0] ??
+    normalizePending(source.pendingReceivedQuestion ?? source.pending_received_question);
 
   return {
     familyConnected: getBoolean(source, ["familyConnected", "family_connected"]) || members.length > 0,
@@ -240,7 +264,7 @@ function normalizeHomeSummary(input: unknown, connectedMembers: HomeFamilyMember
       members.some((member) => member.active && (member.role === "mother" || member.role === "father")),
     connectedMembers: members,
     todayCompletedCount: getNumber(source, ["todayCompletedCount", "today_completed_count"]) ?? 0,
-    pendingReceivedQuestion: normalizePending(source.pendingReceivedQuestion ?? source.pending_received_question),
+    pendingReceivedQuestion,
     latestSentQuestion: latestSentQuestion ?? latestSentQuestions[0] ?? null,
     latestSentQuestions,
     aiStatus: getNullableString(source, ["aiStatus", "ai_status"]),
@@ -250,9 +274,10 @@ function normalizeHomeSummary(input: unknown, connectedMembers: HomeFamilyMember
 export async function getHomeQuestionSummary(_currentUserId?: number | string) {
   void _currentUserId;
   try {
-    const [homeResponse, familyMembers] = await Promise.all([
+    const [homeResponse, familyMembers, receivedQuestions] = await Promise.all([
       apiFetch<unknown>("/v1/home/summary"),
       getCurrentUserFamilyMembers().catch(() => []),
+      getReceivedQuestions({ unansweredOnly: true, sort: "unanswered_first" }).catch(() => []),
     ]);
 
     const connectedMembers = familyMembers.map((member) =>
@@ -267,7 +292,7 @@ export async function getHomeQuestionSummary(_currentUserId?: number | string) {
       }),
     );
 
-    return normalizeHomeSummary(homeResponse, connectedMembers);
+    return normalizeHomeSummary(homeResponse, connectedMembers, receivedQuestions);
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) throw error;
     throw error;
